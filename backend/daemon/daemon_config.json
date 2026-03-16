@@ -1,0 +1,24 @@
+{
+"servers" : [
+	{
+	"server_id" : "DB_SERVER",
+	"log_file" : "logs/db_server.log"
+	},
+	{
+	"server_id" : "API_SERVER",
+	"log_file" : "logs/api_server.log"
+	},
+	{
+	"server_id" : "AUTH_SERVER",
+	"log_file" : "logs/auth_server.log"
+	},
+	{
+	"server_id" : "INFRA_SERVER",
+	"log_file" : "logs/infra_server.log"
+	},
+	{
+	"server_id" : "HEALTHCARE_SERVER",
+	"log_file" : "logs/healthcare_server.log"
+	}
+]
+}
