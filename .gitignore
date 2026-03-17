@@ -27,11 +27,11 @@ share/python-wheels/
 MANIFEST
 
 # Virtual environments
-venv/
-env/
-ENV/
-.venv/
-.pyenv/
+# venv/
+# env/
+# ENV/
+# .venv/
+# .pyenv/
 
 # PyInstaller
 *.manifest

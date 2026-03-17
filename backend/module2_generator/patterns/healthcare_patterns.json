@@ -1,0 +1,4223 @@
+{
+  "server": "healthcare",
+  "templates": {
+    "by_frequency": {
+      "onExtend:<*> <*> <*> <*>": 273,
+      "onStandStepChanged <*>": 260,
+      "getTodayTotalDetailSteps = <*>##<*>##<*>##<*>##<*>##<*>": 242,
+      "setTodayTotalDetailSteps=<*>##<*>##<*>##<*>##<*>##<*>": 241,
+      "calculateCaloriesWithCache totalCalories=<*>": 241,
+      "calculateAltitudeWithCache totalAltitude=<*>": 241,
+      "processHandleBroadcastAction action:android.intent.action.TIME_TICK": 144,
+      "REPORT : <*> <*> <*> <*>": 136,
+      "onReceive action: android.intent.action.SCREEN_ON": 17,
+      "processHandleBroadcastAction action:android.intent.action.SCREEN_ON": 17,
+      "flush sensor data": 17,
+      "onReceive action: android.intent.action.SCREEN_OFF": 17,
+      "new date =<*>, type=<*>,<*>.<*>,old=<*>.<*>": 17,
+      "getBinderPackageName packageName = com.huawei.health": 8,
+      "getTodaySportData mStepsRecordManager=com.huawei.health.g.c@8a2a501": 6,
+      "upLoadOneMinuteDataToEngine time=<*>,<*>,<*>,<*>,<*>": 5,
+      "startSync hiSyncOption = HiSyncOption{syncAction=<*>, syncMethod=<*>, syncScope=<*>, syncDataType=<*>, syncModel=<*>, pushAction=<*>},app = <*> who = <*>": 5,
+      "needAutoSync autoSyncSwitch is open": 5,
+      "initDataPrivacy the dataPrivacy switch is open, start push health data!": 5,
+      "initDataPrivacy the dataPrivacy is true": 5,
+      "initUserPrivacy the userPrivacy switch is open, start push user data!": 5,
+      "initUserPrivacy the userPrivacy is true": 5,
+      "ifCanSync not! no cloud version": 5,
+      "sendSyncFailedBroadcast": 5,
+      "timeStamp back,extendReportTimeStamp=<*>": 5,
+      "saveStatData() type =<*>,time = <*>,statClient = <*>,who is <*>": 4,
+      "startTimer start autoSync": 3,
+      "stepSyncOrNot appSynTimes is <*>": 3,
+      "getAppContext() isAppValid health or wear, packageName = com.huawei.health": 2,
+      "insertHiHealthData() checkAppType  <*> appID = <*>": 2,
+      "insertHiHealthData() size = <*>,app = <*>,One Data Type = <*>,packageName = com.huawei.health,writeStatType = <*>": 2,
+      "saveHealthDetailData() deviceID = <*>,clientID=<*>,id=<*>": 2,
+      "saveHealthDetailData() saveOneDetailData fail hiHealthData = <*>,type = <*>": 2,
+      "bulkSaveDetailHiHealthData() size = <*>,totalTime = <*>": 2,
+      "startListenerChange subscribeList = [<*>]": 2,
+      "insertHiHealthData() end totalTime = <*>": 2,
+      "checkInsertStatus stepSum or calorieSum is enough": 2,
+      "checkInsertStatus stepStatSum or calorieStatSum is enough": 2,
+      "stepSyncOrNot appSynTimes is <*>, statsyncTimes is <*>": 2,
+      "startInsertSportSync start auto sync,app is <*>": 2,
+      "checkFirstSyncByType no such data in db ,type is <*> deviceCode is <*>": 2,
+      "startInsertSportSync first <*> steps sync,do all sync": 2,
+      "getTodayBasicStandardSteps= <*>##<*>##<*>": 2,
+      "getDiffTotalSteps= <*>##<*>": 2,
+      "isScreenOn true": 1,
+      "screen status unknown,think screen on": 1,
+      "flushTempCacheToDB by stand": 1,
+      "Alarm uploadStaticsToDB totalSteps=7163Calories:153367Floor:240Distance:<*>": 1,
+      "writeDataToDB size <*>": 1,
+      "insertHiHealthData() bulkSaveDetailHiHealthData fail errorCode = <*>,errorMessage = ERR_DATA_INSERT": 1
+    },
+    "total_templates": 75
+  },
+  "components": {
+    "by_frequency": {
+      "Step_LSC": 710,
+      "Step_SPUtils": 494,
+      "Step_ExtSDM": 482,
+      "Step_StandReportReceiver": 171,
+      "HiH_HiSyncControl": 42,
+      "Step_StandStepCounter": 19,
+      "HiH_DataStatManager": 17,
+      "HiH_HiHealthDataInsertStore": 11,
+      "HiH_": 10,
+      "HiH_HiHealthBinder": 9,
+      "Step_FlushableStepDataCache": 8,
+      "HiH_HiAppUtil": 8,
+      "HiH_HiBroadcastUtil": 5,
+      "Step_StandStepDataManager": 5,
+      "HiH_ListenerManager": 2,
+      "HiH_HiSyncUtil": 2,
+      "Step_HGNH": 2,
+      "Step_ScreenUtil": 1,
+      "Step_DataCache": 1,
+      "Step_NotificationUtil": 1
+    },
+    "total_components": 20
+  },
+  "state_machine": {
+    "counters": {
+      "onStandStepChanged": {
+        "type": "incrementing_counter",
+        "samples": [
+          3579,
+          3579,
+          3579,
+          3580,
+          3581,
+          3583,
+          3584,
+          3585,
+          3586,
+          3587,
+          3588,
+          3589,
+          3589,
+          3589,
+          3590,
+          3591,
+          3592,
+          3593,
+          3594,
+          3595,
+          3596,
+          3597,
+          3598,
+          3599,
+          3600,
+          3601,
+          3602,
+          3603,
+          3604,
+          3605,
+          3606,
+          3607,
+          3608,
+          3609,
+          3610,
+          3611,
+          3612,
+          3613,
+          3614,
+          3616,
+          3617,
+          3619,
+          3620,
+          3622,
+          3624,
+          3625,
+          3626,
+          3626,
+          3626,
+          3628,
+          3630,
+          3632,
+          3634,
+          3636,
+          3638,
+          3640,
+          3642,
+          3643,
+          3646,
+          3646,
+          3647,
+          3649,
+          3651,
+          3653,
+          3655,
+          3656,
+          3658,
+          3660,
+          3662,
+          3664,
+          3666,
+          3667,
+          3669,
+          3671,
+          3673,
+          3674,
+          3675,
+          3676,
+          3677,
+          3678,
+          3679,
+          3681,
+          3683,
+          3684,
+          3685,
+          3686,
+          3686,
+          3689,
+          3694,
+          3696,
+          3698,
+          3700,
+          3702,
+          3704,
+          3707,
+          3711,
+          3712,
+          3726,
+          3726,
+          3732,
+          3732,
+          3732,
+          3732,
+          3735,
+          3737,
+          3739,
+          3742,
+          3745,
+          3746,
+          3748,
+          3751,
+          3753,
+          3755,
+          3757,
+          3758,
+          3759,
+          3760,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3761,
+          3763,
+          3764,
+          3765,
+          3768,
+          3770,
+          3772,
+          3774,
+          3777,
+          3780,
+          3783,
+          3784,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786,
+          3786
+        ]
+      },
+      "1514038530000": {
+        "type": "incrementing_counter",
+        "samples": [
+          14,
+          0,
+          1
+        ]
+      },
+      "0": {
+        "type": "incrementing_counter",
+        "samples": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          0,
+          0,
+          5,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          5,
+          5,
+          5,
+          0,
+          0,
+          5,
+          0,
+          5,
+          0,
+          0,
+          0,
+          5,
+          5,
+          5,
+          0,
+          5,
+          5,
+          0,
+          0,
+          5,
+          5,
+          5,
+          0,
+          5,
+          5,
+          5,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          0,
+          0,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          0,
+          5,
+          5,
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          0,
+          5,
+          0,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          5,
+          0,
+          0,
+          5,
+          0,
+          5
+        ]
+      },
+      "7007": {
+        "type": "counter",
+        "samples": [
+          5002
+        ]
+      },
+      "150089": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7008": {
+        "type": "counter",
+        "samples": [
+          5003
+        ]
+      },
+      "150111": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038531000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          2
+        ]
+      },
+      "7009": {
+        "type": "counter",
+        "samples": [
+          5004
+        ]
+      },
+      "150132": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7011": {
+        "type": "counter",
+        "samples": [
+          5005
+        ]
+      },
+      "150175": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038532000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7012": {
+        "type": "counter",
+        "samples": [
+          5006
+        ]
+      },
+      "150197": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038533000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7013": {
+        "type": "counter",
+        "samples": [
+          5007
+        ]
+      },
+      "150218": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7014": {
+        "type": "counter",
+        "samples": [
+          5007
+        ]
+      },
+      "150239": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038534000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7015": {
+        "type": "counter",
+        "samples": [
+          5008
+        ]
+      },
+      "150261": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038535000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7017": {
+        "type": "counter",
+        "samples": [
+          5010,
+          5010
+        ]
+      },
+      "150304": {
+        "type": "counter",
+        "samples": [
+          240,
+          240
+        ]
+      },
+      "1514038536000": {
+        "type": "incrementing_counter",
+        "samples": [
+          0,
+          1,
+          1
+        ]
+      },
+      "7018": {
+        "type": "counter",
+        "samples": [
+          5010
+        ]
+      },
+      "150325": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7019": {
+        "type": "counter",
+        "samples": [
+          5011
+        ]
+      },
+      "150346": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038537000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7020": {
+        "type": "counter",
+        "samples": [
+          5012
+        ]
+      },
+      "150368": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038538000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7021": {
+        "type": "counter",
+        "samples": [
+          5012
+        ]
+      },
+      "150389": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7022": {
+        "type": "counter",
+        "samples": [
+          5013
+        ]
+      },
+      "150411": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038539000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7023": {
+        "type": "counter",
+        "samples": [
+          5014
+        ]
+      },
+      "150432": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7024": {
+        "type": "counter",
+        "samples": [
+          5015
+        ]
+      },
+      "150454": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038540000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7025": {
+        "type": "counter",
+        "samples": [
+          5015
+        ]
+      },
+      "150475": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038541000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7026": {
+        "type": "counter",
+        "samples": [
+          5016
+        ]
+      },
+      "150496": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7027": {
+        "type": "counter",
+        "samples": [
+          5017
+        ]
+      },
+      "150518": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038542000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7028": {
+        "type": "counter",
+        "samples": [
+          5017
+        ]
+      },
+      "150539": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7029": {
+        "type": "counter",
+        "samples": [
+          5018
+        ]
+      },
+      "150561": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038543000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7030": {
+        "type": "counter",
+        "samples": [
+          5019
+        ]
+      },
+      "150582": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038544000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7031": {
+        "type": "counter",
+        "samples": [
+          5020
+        ]
+      },
+      "150604": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7032": {
+        "type": "counter",
+        "samples": [
+          5020
+        ]
+      },
+      "150625": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038545000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7033": {
+        "type": "counter",
+        "samples": [
+          5021
+        ]
+      },
+      "150646": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038546000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7034": {
+        "type": "counter",
+        "samples": [
+          5022
+        ]
+      },
+      "150668": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7035": {
+        "type": "counter",
+        "samples": [
+          5022
+        ]
+      },
+      "150689": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038547000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7036": {
+        "type": "counter",
+        "samples": [
+          5023
+        ]
+      },
+      "150711": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038548000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7037": {
+        "type": "counter",
+        "samples": [
+          5024
+        ]
+      },
+      "150732": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7038": {
+        "type": "counter",
+        "samples": [
+          5025
+        ]
+      },
+      "150753": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038549000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7039": {
+        "type": "counter",
+        "samples": [
+          5025
+        ]
+      },
+      "150775": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038550000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7040": {
+        "type": "counter",
+        "samples": [
+          5026
+        ]
+      },
+      "150796": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7041": {
+        "type": "counter",
+        "samples": [
+          5027
+        ]
+      },
+      "150818": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038551000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7042": {
+        "type": "counter",
+        "samples": [
+          5027
+        ]
+      },
+      "150839": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038552000": {
+        "type": "counter",
+        "samples": [
+          2
+        ]
+      },
+      "7044": {
+        "type": "counter",
+        "samples": [
+          5029
+        ]
+      },
+      "150882": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038553000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7045": {
+        "type": "counter",
+        "samples": [
+          5030
+        ]
+      },
+      "150903": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038554000": {
+        "type": "counter",
+        "samples": [
+          2
+        ]
+      },
+      "7047": {
+        "type": "counter",
+        "samples": [
+          5031
+        ]
+      },
+      "150946": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038555000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7048": {
+        "type": "counter",
+        "samples": [
+          5032
+        ]
+      },
+      "150968": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038556000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7050": {
+        "type": "counter",
+        "samples": [
+          5033
+        ]
+      },
+      "151011": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7052": {
+        "type": "counter",
+        "samples": [
+          5035
+        ]
+      },
+      "151053": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038558000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7053": {
+        "type": "counter",
+        "samples": [
+          5035
+        ]
+      },
+      "151075": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038560000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7054": {
+        "type": "counter",
+        "samples": [
+          5036
+        ]
+      },
+      "151096": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038561000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038639000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038641000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7056": {
+        "type": "counter",
+        "samples": [
+          5037
+        ]
+      },
+      "151139": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7058": {
+        "type": "counter",
+        "samples": [
+          5039
+        ]
+      },
+      "151182": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038642000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7060": {
+        "type": "counter",
+        "samples": [
+          5040
+        ]
+      },
+      "151225": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7062": {
+        "type": "counter",
+        "samples": [
+          5042
+        ]
+      },
+      "151268": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038643000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7064": {
+        "type": "counter",
+        "samples": [
+          5043
+        ]
+      },
+      "151310": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7066": {
+        "type": "counter",
+        "samples": [
+          5045
+        ]
+      },
+      "151353": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038644000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7068": {
+        "type": "counter",
+        "samples": [
+          5046
+        ]
+      },
+      "151396": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7070": {
+        "type": "counter",
+        "samples": [
+          5047
+        ]
+      },
+      "151439": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038645000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          3
+        ]
+      },
+      "7071": {
+        "type": "counter",
+        "samples": [
+          5048
+        ]
+      },
+      "151460": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7074": {
+        "type": "counter",
+        "samples": [
+          5050
+        ]
+      },
+      "151525": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038648000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038665000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7075": {
+        "type": "counter",
+        "samples": [
+          5051
+        ]
+      },
+      "151546": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038666000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7077": {
+        "type": "counter",
+        "samples": [
+          5052
+        ]
+      },
+      "151589": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7079": {
+        "type": "counter",
+        "samples": [
+          5054
+        ]
+      },
+      "151632": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038667000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7081": {
+        "type": "counter",
+        "samples": [
+          5055
+        ]
+      },
+      "151675": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7083": {
+        "type": "counter",
+        "samples": [
+          5057
+        ]
+      },
+      "151717": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038668000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          2
+        ]
+      },
+      "7084": {
+        "type": "counter",
+        "samples": [
+          5057
+        ]
+      },
+      "151739": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7086": {
+        "type": "counter",
+        "samples": [
+          5059
+        ]
+      },
+      "151782": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038669000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7088": {
+        "type": "counter",
+        "samples": [
+          5060
+        ]
+      },
+      "151824": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7090": {
+        "type": "counter",
+        "samples": [
+          5062
+        ]
+      },
+      "151867": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038670000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7092": {
+        "type": "counter",
+        "samples": [
+          5063
+        ]
+      },
+      "151910": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7094": {
+        "type": "counter",
+        "samples": [
+          5065
+        ]
+      },
+      "151953": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038671000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          2
+        ]
+      },
+      "7095": {
+        "type": "counter",
+        "samples": [
+          5065
+        ]
+      },
+      "151974": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7097": {
+        "type": "counter",
+        "samples": [
+          5067
+        ]
+      },
+      "152017": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038672000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7099": {
+        "type": "counter",
+        "samples": [
+          5068
+        ]
+      },
+      "152060": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7101": {
+        "type": "counter",
+        "samples": [
+          5070
+        ]
+      },
+      "152103": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038673000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7102": {
+        "type": "counter",
+        "samples": [
+          5070
+        ]
+      },
+      "152124": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038674000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7103": {
+        "type": "counter",
+        "samples": [
+          5071
+        ]
+      },
+      "152146": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038675000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7104": {
+        "type": "counter",
+        "samples": [
+          5072
+        ]
+      },
+      "152167": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038676000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7105": {
+        "type": "counter",
+        "samples": [
+          5072
+        ]
+      },
+      "152189": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038677000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7106": {
+        "type": "counter",
+        "samples": [
+          5073
+        ]
+      },
+      "152210": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038678000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          2
+        ]
+      },
+      "7107": {
+        "type": "counter",
+        "samples": [
+          5074
+        ]
+      },
+      "152231": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7109": {
+        "type": "counter",
+        "samples": [
+          5075
+        ]
+      },
+      "152274": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038680000": {
+        "type": "counter",
+        "samples": [
+          2
+        ]
+      },
+      "7111": {
+        "type": "counter",
+        "samples": [
+          5077
+        ]
+      },
+      "152317": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038682000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7112": {
+        "type": "counter",
+        "samples": [
+          5077
+        ]
+      },
+      "152339": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038683000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7113": {
+        "type": "counter",
+        "samples": [
+          5078
+        ]
+      },
+      "152360": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038686000": {
+        "type": "counter",
+        "samples": [
+          1,
+          0
+        ]
+      },
+      "7114": {
+        "type": "counter",
+        "samples": [
+          5079
+        ]
+      },
+      "152381": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038748000": {
+        "type": "counter",
+        "samples": [
+          3
+        ]
+      },
+      "7117": {
+        "type": "counter",
+        "samples": [
+          5081
+        ]
+      },
+      "152446": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038749000": {
+        "type": "counter",
+        "samples": [
+          5,
+          2
+        ]
+      },
+      "7122": {
+        "type": "counter",
+        "samples": [
+          5085
+        ]
+      },
+      "152553": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7124": {
+        "type": "counter",
+        "samples": [
+          5086
+        ]
+      },
+      "152596": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038750000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7126": {
+        "type": "counter",
+        "samples": [
+          5087
+        ]
+      },
+      "152638": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7128": {
+        "type": "counter",
+        "samples": [
+          5089
+        ]
+      },
+      "152681": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038751000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7130": {
+        "type": "counter",
+        "samples": [
+          5090
+        ]
+      },
+      "152724": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7132": {
+        "type": "counter",
+        "samples": [
+          5092
+        ]
+      },
+      "152767": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038752000": {
+        "type": "incrementing_counter",
+        "samples": [
+          3,
+          4
+        ]
+      },
+      "7135": {
+        "type": "counter",
+        "samples": [
+          5094
+        ]
+      },
+      "152831": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7139": {
+        "type": "counter",
+        "samples": [
+          5097
+        ]
+      },
+      "152917": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038753000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7140": {
+        "type": "counter",
+        "samples": [
+          5097
+        ]
+      },
+      "152938": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038755000": {
+        "type": "counter",
+        "samples": [
+          14
+        ]
+      },
+      "7154": {
+        "type": "counter",
+        "samples": [
+          5107
+        ]
+      },
+      "153238": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038756000": {
+        "type": "incrementing_counter",
+        "samples": [
+          0,
+          6
+        ]
+      },
+      "1514038798000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "7160": {
+        "type": "counter",
+        "samples": [
+          5112
+        ]
+      },
+      "153367": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "size": {
+        "type": "counter",
+        "samples": [
+          327
+        ]
+      },
+      "1514038799000": {
+        "type": "counter",
+        "samples": [
+          3,
+          2
+        ]
+      },
+      "checkAppType": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "is": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          20171224,
+          20171223,
+          0
+        ]
+      },
+      "first": {
+        "type": "counter",
+        "samples": [
+          500,
+          500
+        ]
+      },
+      "7163": {
+        "type": "counter",
+        "samples": [
+          5114
+        ]
+      },
+      "153431": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7165": {
+        "type": "counter",
+        "samples": [
+          5115
+        ]
+      },
+      "153474": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038800000": {
+        "type": "incrementing_counter",
+        "samples": [
+          2,
+          3
+        ]
+      },
+      "7167": {
+        "type": "counter",
+        "samples": [
+          5117
+        ]
+      },
+      "153517": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7170": {
+        "type": "counter",
+        "samples": [
+          5119
+        ]
+      },
+      "153581": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038801000": {
+        "type": "counter",
+        "samples": [
+          3,
+          1
+        ]
+      },
+      "7173": {
+        "type": "counter",
+        "samples": [
+          5121
+        ]
+      },
+      "153645": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7174": {
+        "type": "counter",
+        "samples": [
+          5122
+        ]
+      },
+      "153667": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038802000": {
+        "type": "incrementing_counter",
+        "samples": [
+          2,
+          3
+        ]
+      },
+      "7176": {
+        "type": "counter",
+        "samples": [
+          5123
+        ]
+      },
+      "153709": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7179": {
+        "type": "counter",
+        "samples": [
+          5125
+        ]
+      },
+      "153774": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038803000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7181": {
+        "type": "counter",
+        "samples": [
+          5127
+        ]
+      },
+      "153817": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7183": {
+        "type": "counter",
+        "samples": [
+          5128
+        ]
+      },
+      "153859": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038804000": {
+        "type": "counter",
+        "samples": [
+          2
+        ]
+      },
+      "7185": {
+        "type": "counter",
+        "samples": [
+          5130
+        ]
+      },
+      "153902": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038805000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7186": {
+        "type": "counter",
+        "samples": [
+          5130
+        ]
+      },
+      "153924": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038806000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7187": {
+        "type": "counter",
+        "samples": [
+          5131
+        ]
+      },
+      "153945": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514038808000": {
+        "type": "counter",
+        "samples": [
+          1,
+          1
+        ]
+      },
+      "7188": {
+        "type": "counter",
+        "samples": [
+          5132
+        ]
+      },
+      "153966": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7189": {
+        "type": "counter",
+        "samples": [
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132,
+          5132
+        ]
+      },
+      "153988": {
+        "type": "counter",
+        "samples": [
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240,
+          240
+        ]
+      },
+      "1514038813000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038816000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038819000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038879000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038939000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514038999000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039059000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039062000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039091000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039093000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039098000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039112000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039172000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039232000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039292000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039352000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039412000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039424000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039492000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039515000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039575000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039520000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039590000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039626000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "1514039834000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039857000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039917000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039977000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514039965000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040348000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040354000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040662000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040697000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "1514040700000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040708000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040766000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0,
+          0
+        ]
+      },
+      "1514040772000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040776000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040836000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040781000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040786000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040793000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0,
+          0
+        ]
+      },
+      "1514040895000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514040956000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0,
+          0
+        ]
+      },
+      "1514040966000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041026000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041086000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041146000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041206000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041266000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041326000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041386000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041446000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041506000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041566000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041626000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041627000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "1514041699000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041722000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041782000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041842000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041902000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514041962000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042022000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042082000": {
+        "type": "incrementing_counter",
+        "samples": [
+          0,
+          2,
+          1
+        ]
+      },
+      "1514042064000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "7191": {
+        "type": "counter",
+        "samples": [
+          5134
+        ]
+      },
+      "154031": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7192": {
+        "type": "counter",
+        "samples": [
+          5135
+        ]
+      },
+      "154052": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042083000": {
+        "type": "incrementing_counter",
+        "samples": [
+          1,
+          3
+        ]
+      },
+      "7193": {
+        "type": "counter",
+        "samples": [
+          5135
+        ]
+      },
+      "154074": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7196": {
+        "type": "counter",
+        "samples": [
+          5137
+        ]
+      },
+      "154138": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042084000": {
+        "type": "counter",
+        "samples": [
+          2,
+          2
+        ]
+      },
+      "7198": {
+        "type": "counter",
+        "samples": [
+          5139
+        ]
+      },
+      "154181": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7200": {
+        "type": "counter",
+        "samples": [
+          5140
+        ]
+      },
+      "154223": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042085000": {
+        "type": "incrementing_counter",
+        "samples": [
+          2,
+          3
+        ]
+      },
+      "7202": {
+        "type": "counter",
+        "samples": [
+          5142
+        ]
+      },
+      "154266": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7205": {
+        "type": "counter",
+        "samples": [
+          5144
+        ]
+      },
+      "154331": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042086000": {
+        "type": "counter",
+        "samples": [
+          3,
+          3
+        ]
+      },
+      "7208": {
+        "type": "counter",
+        "samples": [
+          5146
+        ]
+      },
+      "154395": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "7211": {
+        "type": "counter",
+        "samples": [
+          5148
+        ]
+      },
+      "154459": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042087000": {
+        "type": "counter",
+        "samples": [
+          1
+        ]
+      },
+      "7212": {
+        "type": "counter",
+        "samples": [
+          5149
+        ]
+      },
+      "154481": {
+        "type": "counter",
+        "samples": [
+          240
+        ]
+      },
+      "1514042088000": {
+        "type": "counter",
+        "samples": [
+          2
+        ]
+      },
+      "7214": {
+        "type": "counter",
+        "samples": [
+          5150,
+          5150,
+          5150
+        ]
+      },
+      "154523": {
+        "type": "counter",
+        "samples": [
+          240,
+          240,
+          240
+        ]
+      },
+      "1514042091000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042182000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042205000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042265000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042261000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042262000": {
+        "type": "counter",
+        "samples": [
+          0,
+          0
+        ]
+      },
+      "1514042360000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042361000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042595000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042599000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042944000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514042945000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043434000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043436000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043610000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043614000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043759000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043967000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514043974000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044249000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044377000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044380000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044395000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044397000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044405000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044411000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044420000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044422000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044431000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044437000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044468000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044469000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044474000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044475000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044485000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044487000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044494000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044496000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044524000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044525000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044572000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044573000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044588000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044595000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044654000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044662000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "theDayChanged": {
+        "type": "counter",
+        "samples": [
+          1514044800216
+        ]
+      },
+      "restar": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "setGoalNotifiShownRecord": {
+        "type": "counter",
+        "samples": [
+          1514044800237
+        ]
+      },
+      "1514044801000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044805000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514044806000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045123000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045177000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045222000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045224000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045240000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045241000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045344000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045346000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045374000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045375000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045409000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045410000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045442000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045443000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045516000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045517000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514045753000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514046316000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514046317000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "1514046505000": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      }
+    },
+    "flags": {
+      "SCREEN_ON": 34,
+      "SCREEN_OFF": 17,
+      "true": 17,
+      "false": 1
+    },
+    "sequences": {
+      "common_transitions": {
+        "getTodayTotalDetailSteps = 151 \u2192 setTodayTotalDetailSteps=15140": 241,
+        "calculateCaloriesWithCache tot \u2192 calculateAltitudeWithCache tot": 240,
+        "setTodayTotalDetailSteps=15140 \u2192 calculateCaloriesWithCache tot": 225,
+        "calculateAltitudeWithCache tot \u2192 onStandStepChanged 3786": 39,
+        "calculateAltitudeWithCache tot \u2192 processHandleBroadcastAction a": 38,
+        "processHandleBroadcastAction a \u2192 onStandStepChanged 3786": 25,
+        "onReceive action: android.inte \u2192 processHandleBroadcastAction a": 23,
+        "processHandleBroadcastAction a \u2192 flush sensor data": 17,
+        "flush sensor data \u2192 getTodayTotalDetailSteps = 151": 14,
+        "calculateAltitudeWithCache tot \u2192 REPORT : 7189 5132 153988 240": 13,
+        "REPORT : 7189 5132 153988 240 \u2192 onStandStepChanged 3761": 13,
+        "calculateAltitudeWithCache tot \u2192 onStandStepChanged 3761": 12,
+        "calculateAltitudeWithCache tot \u2192 onReceive action: android.inte": 11,
+        "processHandleBroadcastAction a \u2192 onStandStepChanged 3761": 11,
+        "setTodayTotalDetailSteps=15140 \u2192 onStandStepChanged 3761": 11,
+        "onStandStepChanged 3761 \u2192 calculateCaloriesWithCache tot": 11,
+        "processHandleBroadcastAction a \u2192 getTodayTotalDetailSteps = 151": 7,
+        "onReceive action: android.inte \u2192 onStandStepChanged 3761": 7,
+        "initDataPrivacy the dataPrivac \u2192 initUserPrivacy the userPrivac": 5,
+        "initUserPrivacy the userPrivac \u2192 ifCanSync not! no cloud versio": 5
+      },
+      "total_sequences": 1891
+    },
+    "values": {
+      "totalCalories": {
+        "min": 0,
+        "max": 131208,
+        "avg": 116721.44813278009,
+        "samples": 241
+      },
+      "totalAltitude": {
+        "min": 0,
+        "max": 240,
+        "avg": 216.09958506224066,
+        "samples": 241
+      },
+      "totalSteps": {
+        "min": 7163,
+        "max": 7163,
+        "avg": 7163.0,
+        "samples": 1
+      }
+    }
+  },
+  "causal_chains": {
+    "chains": [
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3579",
+        "to": "onExtend:1514038530000 14 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038530000 14 0 4",
+        "to": "processHandleBroadcastAction action:android.intent",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "processHandleBroadcastAction action:android.intent",
+        "to": "onStandStepChanged 3579",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3579",
+        "to": "onExtend:1514038530000 0 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038530000 0 0 4",
+        "to": "onStandStepChanged 3579",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3579",
+        "to": "onStandStepChanged 3580",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3580",
+        "to": "onExtend:1514038530000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038530000 1 0 4",
+        "to": "onStandStepChanged 3581",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3581",
+        "to": "onExtend:1514038531000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038531000 1 0 4",
+        "to": "onStandStepChanged 3583",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3583",
+        "to": "onExtend:1514038531000 2 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038531000 2 0 4",
+        "to": "onStandStepChanged 3584",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3584",
+        "to": "onExtend:1514038532000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038532000 1 0 4",
+        "to": "onStandStepChanged 3585",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3585",
+        "to": "onExtend:1514038533000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038533000 1 0 4",
+        "to": "onStandStepChanged 3586",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3586",
+        "to": "onExtend:1514038533000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038533000 1 0 4",
+        "to": "onStandStepChanged 3587",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onStandStepChanged 3587",
+        "to": "onExtend:1514038534000 1 0 4",
+        "time_diff": 1
+      },
+      {
+        "component": "Step_LSC",
+        "from": "onExtend:1514038534000 1 0 4",
+        "to": "onStandStepChanged 3588",
+        "time_diff": 1
+      }
+    ],
+    "transition_probabilities": {
+      "onStandStepChanged 3579": {
+        "onExtend:1514038530000 14 0 4": 0.3333333333333333,
+        "onExtend:1514038530000 0 0 4": 0.3333333333333333,
+        "onStandStepChanged 3580": 0.3333333333333333
+      },
+      "onExtend:1514038530000 14 0 4": {
+        "processHandleBroadcastAction action:android.intent": 1.0
+      },
+      "processHandleBroadcastAction action:android.intent": {
+        "onStandStepChanged 3579": 0.00625,
+        "onStandStepChanged 3589": 0.00625,
+        "onStandStepChanged 3626": 0.0125,
+        "onStandStepChanged 3684": 0.00625,
+        "onStandStepChanged 3689": 0.00625,
+        "onStandStepChanged 3732": 0.00625,
+        "onStandStepChanged 3745": 0.00625,
+        "processHandleBroadcastAction action:android.intent": 0.59375,
+        "onStandStepChanged 3761": 0.16875,
+        "onExtend:1514039515000 0 0 0": 0.00625,
+        "getTodaySportData mStepsRecordManager=com.huawei.h": 0.00625,
+        "onStandStepChanged 3786": 0.175
+      },
+      "onExtend:1514038530000 0 0 4": {
+        "onStandStepChanged 3579": 1.0
+      },
+      "onStandStepChanged 3580": {
+        "onExtend:1514038530000 1 0 4": 1.0
+      },
+      "onExtend:1514038530000 1 0 4": {
+        "onStandStepChanged 3581": 1.0
+      },
+      "onStandStepChanged 3581": {
+        "onExtend:1514038531000 1 0 4": 1.0
+      },
+      "onExtend:1514038531000 1 0 4": {
+        "onStandStepChanged 3583": 1.0
+      },
+      "onStandStepChanged 3583": {
+        "onExtend:1514038531000 2 0 4": 1.0
+      },
+      "onExtend:1514038531000 2 0 4": {
+        "onStandStepChanged 3584": 1.0
+      },
+      "onStandStepChanged 3584": {
+        "onExtend:1514038532000 1 0 4": 1.0
+      },
+      "onExtend:1514038532000 1 0 4": {
+        "onStandStepChanged 3585": 1.0
+      },
+      "onStandStepChanged 3585": {
+        "onExtend:1514038533000 1 0 4": 1.0
+      },
+      "onExtend:1514038533000 1 0 4": {
+        "onStandStepChanged 3586": 0.5,
+        "onStandStepChanged 3587": 0.5
+      },
+      "onStandStepChanged 3586": {
+        "onExtend:1514038533000 1 0 4": 1.0
+      },
+      "onStandStepChanged 3587": {
+        "onExtend:1514038534000 1 0 4": 1.0
+      },
+      "onExtend:1514038534000 1 0 4": {
+        "onStandStepChanged 3588": 1.0
+      },
+      "onStandStepChanged 3588": {
+        "onExtend:1514038535000 1 0 4": 1.0
+      },
+      "onExtend:1514038535000 1 0 4": {
+        "onStandStepChanged 3589": 0.5,
+        "processHandleBroadcastAction action:android.intent": 0.5
+      },
+      "onStandStepChanged 3589": {
+        "onExtend:1514038535000 1 0 4": 0.3333333333333333,
+        "onStandStepChanged 3589": 0.3333333333333333,
+        "onExtend:1514038536000 0 0 4": 0.3333333333333333
+      }
+    },
+    "common_patterns": [
+      {
+        "pattern": [
+          "processHandleBroadcastAction action:android.intent",
+          "processHandleBroadcastAction action:android.intent",
+          "processHandleBroadcastAction action:android.intent"
+        ],
+        "frequency": 69
+      },
+      {
+        "pattern": [
+          "calculateAltitudeWithCache totalAltitude=240",
+          "calculateCaloriesWithCache totalCalories=130673",
+          "calculateAltitudeWithCache totalAltitude=240"
+        ],
+        "frequency": 48
+      },
+      {
+        "pattern": [
+          "calculateCaloriesWithCache totalCalories=130673",
+          "calculateAltitudeWithCache totalAltitude=240",
+          "calculateCaloriesWithCache totalCalories=130673"
+        ],
+        "frequency": 47
+      },
+      {
+        "pattern": [
+          "calculateAltitudeWithCache totalAltitude=240",
+          "calculateCaloriesWithCache totalCalories=131208",
+          "calculateAltitudeWithCache totalAltitude=240"
+        ],
+        "frequency": 47
+      },
+      {
+        "pattern": [
+          "calculateCaloriesWithCache totalCalories=131208",
+          "calculateAltitudeWithCache totalAltitude=240",
+          "calculateCaloriesWithCache totalCalories=131208"
+        ],
+        "frequency": 46
+      },
+      {
+        "pattern": [
+          "calculateCaloriesWithCache totalCalories=0",
+          "calculateAltitudeWithCache totalAltitude=0",
+          "calculateCaloriesWithCache totalCalories=0"
+        ],
+        "frequency": 23
+      },
+      {
+        "pattern": [
+          "calculateAltitudeWithCache totalAltitude=0",
+          "calculateCaloriesWithCache totalCalories=0",
+          "calculateAltitudeWithCache totalAltitude=0"
+        ],
+        "frequency": 22
+      },
+      {
+        "pattern": [
+          "processHandleBroadcastAction action:android.intent",
+          "processHandleBroadcastAction action:android.intent",
+          "onStandStepChanged 3786"
+        ],
+        "frequency": 16
+      },
+      {
+        "pattern": [
+          "flush sensor data",
+          "flush sensor data",
+          "flush sensor data"
+        ],
+        "frequency": 15
+      },
+      {
+        "pattern": [
+          "REPORT : 7189 5132 153988 240",
+          "onReceive action: android.intent.action.SCREEN_OFF",
+          "onReceive action: android.intent.action.SCREEN_ON"
+        ],
+        "frequency": 12
+      }
+    ],
+    "total_chains": 1980
+  },
+  "value_relationships": {
+    "correlations": [
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "Step_LSC.onExtend",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.00 \u00d7 Step_LSC.onExtend",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "separated_value",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.24 \u00d7 separated_value",
+        "confidence": "medium"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "Step_SPUtils.number",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.21 \u00d7 Step_SPUtils.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "Step_SPUtils.setTodayTotalDetailSteps",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.00 \u00d7 Step_SPUtils.setTodayTotalDetailSteps",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "Step_ExtSDM.totalCalories",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.03 \u00d7 Step_ExtSDM.totalCalories",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "Step_ExtSDM.totalAltitude",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 14.94 \u00d7 Step_ExtSDM.totalAltitude",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "HiH_HiHealthDataInsertStore.number",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.04 \u00d7 HiH_HiHealthDataInsertStore.number",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onStandStepChanged",
+        "value2": "HiH_DataStatManager.type",
+        "relationship": "Step_LSC.onStandStepChanged \u2248 0.09 \u00d7 HiH_DataStatManager.type",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_LSC.onExtend",
+        "value2": "Step_SPUtils.setTodayTotalDetailSteps",
+        "relationship": "Step_LSC.onExtend \u2248 1.00 \u00d7 Step_SPUtils.setTodayTotalDetailSteps",
+        "confidence": "high"
+      },
+      {
+        "value1": "separated_value",
+        "value2": "Step_SPUtils.setTodayTotalDetailSteps",
+        "relationship": "separated_value \u2248 0.00 \u00d7 Step_SPUtils.setTodayTotalDetailSteps",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_SPUtils.setTodayTotalDetailSteps",
+        "value2": "Step_ExtSDM.totalAltitude",
+        "relationship": "Step_SPUtils.setTodayTotalDetailSteps \u2248 6308493500.00 \u00d7 Step_ExtSDM.totalAltitude",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_SPUtils.setTodayTotalDetailSteps",
+        "value2": "Step_ExtSDM.totalAltitude",
+        "relationship": "Step_SPUtils.setTodayTotalDetailSteps = Step_ExtSDM.totalAltitude + 1514038439760",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_ExtSDM.totalCalories",
+        "value2": "HiH_DataStatManager.type",
+        "relationship": "Step_ExtSDM.totalCalories \u2248 3.17 \u00d7 HiH_DataStatManager.type",
+        "confidence": "medium"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "Step_FlushableStepDataCache.number",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.06 \u00d7 Step_FlushableStepDataCache.number",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "HiH_HiHealthDataInsertStore.number",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.00 \u00d7 HiH_HiHealthDataInsertStore.number",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "HiH_DataStatManager.type",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.01 \u00d7 HiH_DataStatManager.type",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "HiH_DataStatManager.old",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.22 \u00d7 HiH_DataStatManager.old",
+        "confidence": "medium"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "HiH_DataStatManager.number",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.10 \u00d7 HiH_DataStatManager.number",
+        "confidence": "high"
+      },
+      {
+        "value1": "Step_ExtSDM.totalAltitude",
+        "value2": "HiH_HiSyncControl.number",
+        "relationship": "Step_ExtSDM.totalAltitude \u2248 0.11 \u00d7 HiH_HiSyncControl.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "HiH_HiSyncControl.is",
+        "value2": "HiH_HiSyncControl.number",
+        "relationship": "HiH_HiSyncControl.is \u2248 0.11 \u00d7 HiH_HiSyncControl.number",
+        "confidence": "medium"
+      }
+    ],
+    "formulas": [
+      {
+        "variable": "Step_SPUtils.setTodayTotalDetailSteps",
+        "pattern": "arithmetic_progression",
+        "description": "Step_SPUtils.setTodayTotalDetailSteps follows an arithmetic progression"
+      },
+      {
+        "variable": "Step_ExtSDM.totalAltitude",
+        "pattern": "arithmetic_progression",
+        "description": "Step_ExtSDM.totalAltitude follows an arithmetic progression"
+      }
+    ],
+    "distributions": {
+      "Step_SPUtils.number": {
+        "min": 3428,
+        "max": 1514046420000,
+        "avg": 258344867030.35315,
+        "median": 548365,
+        "count": 2860,
+        "unique_values": 532,
+        "std_dev": 569656300411.5211
+      },
+      "separated_value": {
+        "min": 0,
+        "max": 35149773,
+        "avg": 5993947.548533664,
+        "median": 16256,
+        "count": 2421,
+        "unique_values": 480,
+        "std_dev": 11775654.459540417
+      },
+      "Step_LSC.number": {
+        "min": 240,
+        "max": 1514046505000,
+        "avg": 768071774680.7883,
+        "median": 1514038531000,
+        "count": 548,
+        "unique_values": 337,
+        "std_dev": 757631291773.122
+      },
+      "Step_StandReportReceiver.number": {
+        "min": 240,
+        "max": 154523,
+        "avg": 41160.27777777778,
+        "median": 7007,
+        "count": 540,
+        "unique_values": 333,
+        "std_dev": 64233.05847663035
+      },
+      "Step_ExtSDM.number": {
+        "min": 240,
+        "max": 131208,
+        "avg": 64935.366359447005,
+        "median": 126775,
+        "count": 434,
+        "unique_values": 118,
+        "std_dev": 64779.01561460401
+      },
+      "Step_LSC.onExtend": {
+        "min": 1514038530000,
+        "max": 1514046505000,
+        "avg": 1514040756974.359,
+        "median": 1514039575000,
+        "count": 273,
+        "unique_values": 214,
+        "std_dev": 2420707.092265812
+      },
+      "Step_LSC.onStandStepChanged": {
+        "min": 3579,
+        "max": 3786,
+        "avg": 3719.9384615384615,
+        "median": 3761,
+        "count": 260,
+        "unique_values": 118,
+        "std_dev": 71.34545398673839
+      },
+      "Step_SPUtils.setTodayTotalDetailSteps": {
+        "min": 1514038440000,
+        "max": 1514046420000,
+        "avg": 1514040736680.498,
+        "median": 1514039340000,
+        "count": 241,
+        "unique_values": 47,
+        "std_dev": 2549242.162223854
+      },
+      "Step_ExtSDM.totalCalories": {
+        "min": 0,
+        "max": 131208,
+        "avg": 116721.44813278009,
+        "median": 130052,
+        "count": 241,
+        "unique_values": 118,
+        "std_dev": 38925.17247251458
+      },
+      "Step_ExtSDM.totalAltitude": {
+        "min": 0,
+        "max": 240,
+        "avg": 216.09958506224066,
+        "median": 240,
+        "count": 241,
+        "unique_values": 2,
+        "std_dev": 72.01659559777715
+      },
+      "HiH_DataStatManager.number": {
+        "min": 240,
+        "max": 73999999999995,
+        "avg": 1940030453326.961,
+        "median": 40021,
+        "count": 77,
+        "unique_values": 46,
+        "std_dev": 11845010445052.193
+      },
+      "HiH_DataStatManager.type": {
+        "min": 40002,
+        "max": 40044,
+        "avg": 40014.882352941175,
+        "median": 40006,
+        "count": 17,
+        "unique_values": 13,
+        "std_dev": 14.619688577998064
+      },
+      "HiH_DataStatManager.old": {
+        "min": 292,
+        "max": 210654,
+        "avg": 40110.882352941175,
+        "median": 6137,
+        "count": 17,
+        "unique_values": 15,
+        "std_dev": 72994.07426966447
+      },
+      "Step_FlushableStepDataCache.number": {
+        "min": 327,
+        "max": 25233979,
+        "avg": 13595244.307692308,
+        "median": 25233975,
+        "count": 13,
+        "unique_values": 7,
+        "std_dev": 13084591.72062936
+      },
+      "HiH_HiHealthDataInsertStore.number": {
+        "min": 40002,
+        "max": 1513958400000,
+        "avg": 756979220001.8334,
+        "median": 1513958400000,
+        "count": 12,
+        "unique_values": 5,
+        "std_dev": 790638967568.0828
+      },
+      "HiH_HiSyncControl.is": {
+        "min": 0,
+        "max": 20171224,
+        "avg": 3667495.3636363638,
+        "median": 0,
+        "count": 11,
+        "unique_values": 4,
+        "std_dev": 8159661.575755888
+      },
+      "HiH_HiSyncControl.number": {
+        "min": 500,
+        "max": 20171224,
+        "avg": 4493716.333333333,
+        "median": 20000,
+        "count": 9,
+        "unique_values": 4,
+        "std_dev": 8888314.92124424
+      },
+      "Step_FlushableStepDataCache.time": {
+        "min": 25233975,
+        "max": 25233979,
+        "avg": 25233977.0,
+        "median": 25233977,
+        "count": 5,
+        "unique_values": 5,
+        "std_dev": 1.5811388300841898
+      },
+      "HiH_HiSyncControl.syncAction": {
+        "min": 1,
+        "max": 2,
+        "avg": 1.4,
+        "median": 1,
+        "count": 5,
+        "unique_values": 2,
+        "std_dev": 0.5477225575051661
+      },
+      "HiH_HiSyncControl.syncMethod": {
+        "min": 2,
+        "max": 2,
+        "avg": 2.0,
+        "median": 2,
+        "count": 5,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "HiH_HiSyncControl.syncScope": {
+        "min": 0,
+        "max": 0,
+        "avg": 0.0,
+        "median": 0,
+        "count": 5,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "HiH_HiSyncControl.syncDataType": {
+        "min": 20000,
+        "max": 20000,
+        "avg": 20000.0,
+        "median": 20000,
+        "count": 5,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "HiH_HiSyncControl.syncModel": {
+        "min": 2,
+        "max": 2,
+        "avg": 2.0,
+        "median": 2,
+        "count": 5,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "HiH_HiSyncControl.pushAction": {
+        "min": 0,
+        "max": 0,
+        "avg": 0.0,
+        "median": 0,
+        "count": 5,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "Step_LSC.extendReportTimeStamp": {
+        "min": 1514039575000,
+        "max": 1514042265000,
+        "avg": 1514040947000.0,
+        "median": 1514040836000,
+        "count": 5,
+        "unique_values": 5,
+        "std_dev": 1210470.3631233603
+      },
+      "HiH_HiHealthDataInsertStore.is": {
+        "min": 1,
+        "max": 1,
+        "avg": 1.0,
+        "median": 1,
+        "count": 4,
+        "unique_values": 1,
+        "std_dev": 0.0
+      },
+      "HiH_HiSyncUtil.is": {
+        "min": 0,
+        "max": 1,
+        "avg": 0.5,
+        "median": 1,
+        "count": 4,
+        "unique_values": 2,
+        "std_dev": 0.5773502691896257
+      },
+      "Step_StandStepDataManager.number": {
+        "min": 3786,
+        "max": 1514044800223,
+        "avg": 757022402002.75,
+        "median": 1514044800216,
+        "count": 4,
+        "unique_values": 3,
+        "std_dev": 874134170786.0333
+      }
+    }
+  },
+  "temporal_patterns": {
+    "periodic_events": {},
+    "event_clusters": [],
+    "time_of_day": {
+      "hourly_distribution": {},
+      "peak_hours": []
+    },
+    "gaps_and_bursts": {}
+  },
+  "statistics": {
+    "total_logs": 2000,
+    "unique_components": 20,
+    "unique_templates": 75,
+    "time_span": {
+      "first": "20171223-22:15:29:606",
+      "last": "20171224-1:2:35:789"
+    },
+    "avg_logs_per_minute": "N/A"
+  }
+}

@@ -40,7 +40,7 @@ servers = [
     "servers/api_server.py", 
     "servers/auth_server.py",
     "servers/infra_server.py",
-    "servers/healthcare_server.py"
+    "module2_generator/servers/healthcare_server.py"
 ]
 
 # Start all servers
