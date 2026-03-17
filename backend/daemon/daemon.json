@@ -1,1 +1,212 @@
-[]
+[
+  {
+    "timestamp": "2026-03-16T17:19:16.568669",
+    "level": "INFO",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "ConnectionClosed | query_time=337ms rows=456"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:17.485708",
+    "level": "WARN",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "EndpointHit | endpoint=/predict status=200 latency=435ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:18.385855",
+    "level": "ERROR",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "ConnectionClosed | query_time=46ms rows=991"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:18.488614",
+    "level": "INFO",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "TokenGenerated | user_id=712 ip=192.168.1.109"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:19.408368",
+    "level": "INFO",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "Timeout | endpoint=/predict status=400 latency=310ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:19.493403",
+    "level": "WARN",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "CPUUsageHigh | cpu=95% memory=52%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:19.498605",
+    "level": "ERROR",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "SlowQuery | query_time=33ms rows=780"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:20.325625",
+    "level": "WARN",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "LoginFailure | user_id=536 ip=192.168.1.117"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:20.356512",
+    "level": "INFO",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "DiskUsageWarning | cpu=67% memory=41%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:20.498291",
+    "level": "ERROR",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "ModelInference | patient_id=4172 latency=4454ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:20.829186",
+    "level": "ERROR",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "LoginFailure | user_id=650 ip=192.168.1.155"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:21.104497",
+    "level": "WARN",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "EndpointHit | endpoint=/predict status=200 latency=917ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:21.283277",
+    "level": "ERROR",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "QueryExecuted | query_time=125ms rows=410"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:21.409182",
+    "level": "INFO",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "UserLogout | user_id=267 ip=192.168.1.166"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:41.620232",
+    "level": "INFO",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "MRIProcessingTimeout | patient_id=8493 latency=4902ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:41.641646",
+    "level": "INFO",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "InternalError | endpoint=/predict status=400 latency=222ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:41.672848",
+    "level": "ERROR",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "ServiceRestart | cpu=86% memory=43%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:22.759864",
+    "level": "WARN",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "LoginSuccess | user_id=464 ip=192.168.1.8"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:22.824158",
+    "level": "WARN",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "DiskUsageWarning | cpu=93% memory=69%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:23.018813",
+    "level": "ERROR",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "APIRequest | endpoint=/predict status=400 latency=761ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:23.077065",
+    "level": "ERROR",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "ConnectionClosed | query_time=42ms rows=542"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:23.455569",
+    "level": "INFO",
+    "server_id": "AUTH_SERVER",
+    "log_file": "auth_server.log",
+    "message": "LoginFailure | user_id=812 ip=192.168.1.136"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:23.620549",
+    "level": "WARN",
+    "server_id": "DB_SERVER",
+    "log_file": "db_server.log",
+    "message": "ConnectionClosed | query_time=326ms rows=92"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:23.770142",
+    "level": "INFO",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "MRIProcessingStarted | patient_id=5676 latency=1522ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:24.227003",
+    "level": "INFO",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "DiskUsageWarning | cpu=65% memory=44%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:24.248848",
+    "level": "WARN",
+    "server_id": "API_SERVER",
+    "log_file": "api_server.log",
+    "message": "ResponseSent | endpoint=/predict status=500 latency=530ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:24.767244",
+    "level": "INFO",
+    "server_id": "INFRA_SERVER",
+    "log_file": "infra_server.log",
+    "message": "NetworkLatency | cpu=91% memory=87%"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:25.010634",
+    "level": "WARN",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "PatientRecordAccess | patient_id=8447 latency=4767ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:25.841566",
+    "level": "INFO",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "MRIProcessingStarted | patient_id=7400 latency=1423ms"
+  },
+  {
+    "timestamp": "2026-03-16T17:19:46.300694",
+    "level": "ERROR",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "MRIProcessingTimeout | patient_id=5207 latency=1642ms"
+  }
+]
