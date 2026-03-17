@@ -10,31 +10,36 @@ on:
 
 jobs:
   test-api:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12.3"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         working-directory: ./backend/log-ingestion-api/
         run: |
           python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python3 -m pip install -r requirements.txt
 
       - name: Lint & Syntax Check
         working-directory: ./backend/log-ingestion-api/
-        run: |
-          python3 -m py_compile $(git ls-files '*.py')
+        run: python3 -m py_compile $(git ls-files '*.py')
+        shell: bash
 
-      - name: Start server (smoke test)
+      - name: Start FastAPI server (smoke test)
         working-directory: ./backend/log-ingestion-api/
+        shell: bash
         run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+          python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
           sleep 5
           curl -f http://localhost:8000 || exit 1
