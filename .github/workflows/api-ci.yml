@@ -26,10 +26,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # --- PYTHON DEPENDENCY CACHE ---
-      - name: Set pip cache directory (cross-platform)
-        id: pip-cache
-        run: |
-          echo "PIP_CACHE_DIR=$(python3 -c 'import pip, os; print(os.path.join(os.path.expanduser(\"~\"), \".cache\", \"pip\"))')" >> $GITHUB_ENV
+      - name: Set pip cache directory (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: echo "PIP_CACHE_DIR=$HOME/.cache/pip" >> $GITHUB_ENV
+
+      - name: Set pip cache directory (Windows)
+        if: runner.os == 'Windows'
+        run: echo "PIP_CACHE_DIR=%LocalAppData%\\pip\\Cache" >> $GITHUB_ENV
+        shell: cmd
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
