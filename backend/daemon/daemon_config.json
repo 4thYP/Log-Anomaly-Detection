@@ -19,6 +19,10 @@
         {
             "server_id": "HEALTHCARE_SERVER",
             "log_file": "logs/healthcare_server.log"
+        },
+        {
+            "server_id": "LINUX_SERVER",
+            "log_file": "logs/linux_server.log"
         }
     ]
 }

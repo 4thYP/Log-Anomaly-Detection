@@ -1,4 +1,4 @@
-  #!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Base Server Class
 All servers inherit from this to get pattern-based generation
@@ -13,18 +13,28 @@ import os
 class BaseServer:
     def __init__(self, server_type, log_file, patterns_file):
         self.server_type = server_type
-        self.log_file = f"logs/{log_file}"
+    
+        # Get the absolute path to the backend directory
+        # Current file: .../backend/module2_generator/core/base_server.py
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up two levels to get to backend/
+        backend_dir = os.path.dirname(os.path.dirname(current_dir))
+    
+        # Always write logs to backend/logs/
+        self.log_file = os.path.join(backend_dir, "logs", log_file)
+    
         self.patterns_file = patterns_file
         self.patterns = self.load_patterns()
         self.state = {}  # Internal state variables
         self.log_count = 0
         self.max_logs = 20  # Generate 20 logs by default
-        
-        # Ensure logs directory exists
-        os.makedirs("logs", exist_ok=True)
-        
-        print(f"✅ {server_type} server initialized with {len(self.patterns.get('templates', {}).get('by_frequency', {}))} patterns")
     
+        # Ensure the logs directory exists
+        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
+    
+        print(f"✅ {server_type} server initialized")
+        print(f"📁 Log file: {self.log_file}")
+
     def load_patterns(self):
         """Load learned patterns from JSON file"""
         try:
@@ -127,7 +137,7 @@ class BaseServer:
         return None
     
     def generate_log_line(self):
-        """Generate a single log line"""
+        """Generate a single log line - to be overridden by child classes"""
         component = self.get_random_component()
         template = self.get_random_template()
         message = self.fill_template(template)
@@ -140,12 +150,26 @@ class BaseServer:
         }
     
     def write_log(self, log_data):
-        """Write log to file"""
+        """Write log to file - handles different log formats"""
         # Skip if log_data has skip flag (for chain events that already wrote themselves)
         if log_data.get('skip'):
             return
-            
-        log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['user_id']}|{log_data['message']}"
+        
+        # Different servers have different log formats
+        if self.server_type == 'healthcare':
+            # Healthcare format: timestamp|component|user_id|message
+            log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['user_id']}|{log_data['message']}"
+        elif self.server_type == 'linux':
+            # Linux format: timestamp component process: message
+            # Example: Jun 14 15:16:01 combo sshd(pam_unix)[19939]: authentication failure...
+            process = log_data.get('process', '')
+            if process:
+                log_line = f"{log_data['timestamp']} {log_data['component']} {process}: {log_data['message']}"
+            else:
+                log_line = f"{log_data['timestamp']} {log_data['component']}: {log_data['message']}"
+        else:
+            # Default format for other servers
+            log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['message']}"
         
         with open(self.log_file, 'a') as f:
             f.write(log_line + "\n")
@@ -168,11 +192,11 @@ class BaseServer:
                 logs_generated += 1
                 # Only print for non-chain events (chain events print their own messages)
                 if 'message' in log_data:
-                    print(f"   📝 Log {logs_generated}: {log_data['message'][:50]}...")
+                    # Truncate long messages for display
+                    msg = log_data['message'][:50] + "..." if len(log_data['message']) > 50 else log_data['message']
+                    print(f"   📝 Log {logs_generated}: {msg}")
             
             self.write_log(log_data)
             time.sleep(random.uniform(0.5, 1.5))
         
-        print(f"\n✅ {self.server_type} server finished. Generated {self.max_logs} logs.\n")  
-    
-    
+        print(f"\n✅ {self.server_type} server finished. Generated {self.max_logs} logs.\n")

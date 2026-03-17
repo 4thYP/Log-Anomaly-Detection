@@ -36,15 +36,12 @@ processes.append(daemon)
 time.sleep(2)
 
 servers = [
-    "servers/db_server.py",
-    "servers/api_server.py", 
-    "servers/auth_server.py",
-    "servers/infra_server.py",
-    "module2_generator/servers/healthcare_server.py"
+    "module2_generator/servers/healthcare_server.py",
+    "module2_generator/servers/linux_server.py"
 ]
 
 # Start all servers
-print("Starting servers (each will generate 6 logs)...")
+print("Starting servers (each will generate logs)...")
 for server in servers:
     print(f"Starting {server}")
     p = subprocess.Popen([sys.executable, server])
@@ -52,19 +49,18 @@ for server in servers:
     time.sleep(1)  # Small delay between starting servers
 
 print("\n" + "="*50)
-print("All processes started. Each server will generate 6 logs.")
+print("All processes started. Each server will generate logs.")
 print("The daemon is silently converting logs to JSON in daemon/daemon.json")
 print("Press Ctrl+C to stop all processes.")
 print("="*50 + "\n")
 
 try:
-    # Wait for all server processes to complete (they will exit after 6 logs)
-    # But keep daemon running
+    # Wait for all server processes to complete
     server_processes = processes[1:]  # Exclude daemon
     for p in server_processes:
         p.wait()
     
-    print("\nAll servers have finished generating their 6 logs.")
+    print("\nAll servers have finished generating logs.")
     print("Daemon is still running. Press Ctrl+C to stop the daemon.")
     
     # Keep daemon running until Ctrl+C

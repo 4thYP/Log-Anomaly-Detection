@@ -1,0 +1,618 @@
+[
+  {
+    "timestamp": "20260317-17:57:43:788",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3581"
+  },
+  {
+    "timestamp": "20260317-17:57:43:910",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3581"
+  },
+  {
+    "timestamp": "20260317-17:57:43:816",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=126809"
+  },
+  {
+    "timestamp": "20260317-17:57:43:276",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3581 5824 126809 240"
+  },
+  {
+    "timestamp": "Jul 25 15:01:34",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19901]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=220-135-151-1.hinet-ip.hinet.net user=guest"
+  },
+  {
+    "timestamp": "20260317-17:57:44:554",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3584"
+  },
+  {
+    "timestamp": "20260317-17:57:44:143",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3584"
+  },
+  {
+    "timestamp": "20260317-17:57:44:791",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=126860"
+  },
+  {
+    "timestamp": "20260317-17:57:44:805",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3584 5675 126860 240"
+  },
+  {
+    "timestamp": "20260317-17:57:45:338",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3585"
+  },
+  {
+    "timestamp": "20260317-17:57:45:501",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3585"
+  },
+  {
+    "timestamp": "20260317-17:57:45:876",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=126877"
+  },
+  {
+    "timestamp": "20260317-17:57:45:512",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3585 5635 126877 240"
+  },
+  {
+    "timestamp": "Jun 05 03:55:55",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19902]: check pass; user unknown"
+  },
+  {
+    "timestamp": "20260317-17:57:46:261",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3588"
+  },
+  {
+    "timestamp": "20260317-17:57:46:731",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3588"
+  },
+  {
+    "timestamp": "20260317-17:57:46:513",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=126928"
+  },
+  {
+    "timestamp": "20260317-17:57:46:975",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3588 5189 126928 240"
+  },
+  {
+    "timestamp": "20260317-17:57:46:501",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3588 5162 126928 240"
+  },
+  {
+    "timestamp": "Nov 13 11:06:42",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19903]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=d211-116-254-214.rev.krline.net user=root"
+  },
+  {
+    "timestamp": "20260317-17:57:48:791",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3590"
+  },
+  {
+    "timestamp": "20260317-17:57:48:468",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3590"
+  },
+  {
+    "timestamp": "20260317-17:57:48:270",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=126962"
+  },
+  {
+    "timestamp": "20260317-17:57:48:311",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3590 5390 126962 240"
+  },
+  {
+    "timestamp": "Jul 25 02:41:48",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19904]: session closed for user test"
+  },
+  {
+    "timestamp": "20260317-17:57:49:630",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3593"
+  },
+  {
+    "timestamp": "20260317-17:57:49:660",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3593"
+  },
+  {
+    "timestamp": "20260317-17:57:49:777",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127013"
+  },
+  {
+    "timestamp": "20260317-17:57:49:777",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3593 5097 127013 240"
+  },
+  {
+    "timestamp": "Jun 22 12:57:52",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29001]: connection from zummit.com () at some time"
+  },
+  {
+    "timestamp": "20260317-17:57:50:215",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "99315780 | onStandStepChanged 3001"
+  },
+  {
+    "timestamp": "Nov 22 16:02:05",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "su(pam_unix)[21001]: session opened for user news by (uid=0)"
+  },
+  {
+    "timestamp": "20260317-17:57:51:168",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3595"
+  },
+  {
+    "timestamp": "20260317-17:57:51:581",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3595"
+  },
+  {
+    "timestamp": "20260317-17:57:51:912",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127047"
+  },
+  {
+    "timestamp": "20260317-17:57:51:135",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3595 5594 127047 240"
+  },
+  {
+    "timestamp": "Jun 04 20:55:46",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "su(pam_unix)[21002]: session closed for user news"
+  },
+  {
+    "timestamp": "Jun 14 16:45:30",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19905]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=adsl-70-242-75-179.dsl.ksc2mo.swbell.net user=test"
+  },
+  {
+    "timestamp": "20260317-17:57:52:873",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "27496121 | getTodayBasicStandardSteps= 3004##3006##3009"
+  },
+  {
+    "timestamp": "Dec 15 22:41:24",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19906]: check pass; user unknown"
+  },
+  {
+    "timestamp": "20260317-17:57:53:449",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onReceive action: android.intent.action.SCREEN_OFF"
+  },
+  {
+    "timestamp": "Mar 24 12:56:33",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29002]: connection from 218.188.2.4 () at some time"
+  },
+  {
+    "timestamp": "Dec 17 02:30:44",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19907]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=d211-116-254-214.rev.krline.net"
+  },
+  {
+    "timestamp": "20260317-17:57:55:995",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3595 5199 127047 240"
+  },
+  {
+    "timestamp": "Sep 03 03:35:44",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19908]: check pass; user unknown"
+  },
+  {
+    "timestamp": "20260317-17:57:56:148",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3596"
+  },
+  {
+    "timestamp": "20260317-17:57:56:393",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3596"
+  },
+  {
+    "timestamp": "20260317-17:57:56:427",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127064"
+  },
+  {
+    "timestamp": "20260317-17:57:56:491",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3596 5688 127064 240"
+  },
+  {
+    "timestamp": "Aug 11 16:26:44",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19909]: check pass; user unknown"
+  },
+  {
+    "timestamp": "20260317-17:57:57:364",
+    "level": "HiH_ListenerManager",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "42521702 | getBinderPackageName packageName = com.huawei.health"
+  },
+  {
+    "timestamp": "Sep 13 15:01:43",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29003]: connection from 061092085098.ctinets.com () at some time"
+  },
+  {
+    "timestamp": "20260317-17:57:58:279",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3596 5649 127064 240"
+  },
+  {
+    "timestamp": "Nov 23 08:51:54",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19910]: check pass; user unknown"
+  },
+  {
+    "timestamp": "20260317-17:57:59:272",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onReceive action: android.intent.action.SCREEN_ON"
+  },
+  {
+    "timestamp": "Feb 15 21:41:26",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19911]: authentication failure; logname= uid=0 euid=0 tty=NODEVssh ruser= rhost=adsl-70-242-75-179.dsl.ksc2mo.swbell.net"
+  },
+  {
+    "timestamp": "20260317-17:57:59:185",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3599"
+  },
+  {
+    "timestamp": "20260317-17:57:59:563",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3599"
+  },
+  {
+    "timestamp": "20260317-17:57:59:855",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127115"
+  },
+  {
+    "timestamp": "20260317-17:57:59:987",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3599 5623 127115 240"
+  },
+  {
+    "timestamp": "Mar 27 17:26:22",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29004]: connection from 218.188.2.4 () at some time"
+  },
+  {
+    "timestamp": "20260317-17:58:01:375",
+    "level": "Step_FlushableStepDataCache",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "76335904 | startSync hiSyncOption = HiSyncOption{syncAction=2126, syncMethod=3329, syncScope=4081, syncDataType=611, syncModel=2023, pushAction=7957},app = 7390 who = 6743"
+  },
+  {
+    "timestamp": "May 24 22:03:28",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "sshd(pam_unix)[19912]: session opened for user root by (uid=0)"
+  },
+  {
+    "timestamp": "20260317-17:58:02:456",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3601"
+  },
+  {
+    "timestamp": "20260317-17:58:02:633",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3601"
+  },
+  {
+    "timestamp": "20260317-17:58:02:964",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127149"
+  },
+  {
+    "timestamp": "20260317-17:58:02:824",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3601 5961 127149 240"
+  },
+  {
+    "timestamp": "Jul 04 08:22:06",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29005]: connection from massive.merukuru.org () at some time"
+  },
+  {
+    "timestamp": "20260317-17:58:03:686",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3601 5736 127149 240"
+  },
+  {
+    "timestamp": "Apr 14 10:44:18",
+    "level": "combo",
+    "server_id": "LINUX_SERVER",
+    "log_file": "linux_server.log",
+    "message": "ftpd[29006]: connection from 218.188.2.4 () at some time"
+  },
+  {
+    "timestamp": "20260317-17:58:04:582",
+    "level": "HiH_HiHealthDataInsertStore",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "41278871 | timeStamp back,extendReportTimeStamp=272"
+  },
+  {
+    "timestamp": "20260317-17:58:05:569",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3601 5512 127149 240"
+  },
+  {
+    "timestamp": "20260317-17:58:06:949",
+    "level": "HiH_HiHealthDataInsertStore",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "84860952 | calculateCaloriesWithCache totalCalories=105750"
+  },
+  {
+    "timestamp": "20260317-17:58:07:265",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3601 5206 127149 240"
+  },
+  {
+    "timestamp": "20260317-17:58:07:417",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onReceive action: android.intent.action.SCREEN_OFF"
+  },
+  {
+    "timestamp": "20260317-17:58:09:935",
+    "level": "HiH_ListenerManager",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "24628274 | stepSyncOrNot appSynTimes is 3010"
+  },
+  {
+    "timestamp": "20260317-17:58:10:616",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3603"
+  },
+  {
+    "timestamp": "20260317-17:58:10:216",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3603"
+  },
+  {
+    "timestamp": "20260317-17:58:10:187",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127183"
+  },
+  {
+    "timestamp": "20260317-17:58:10:265",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3603 5298 127183 240"
+  },
+  {
+    "timestamp": "20260317-17:58:09:762",
+    "level": "Step_LSC",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | onStandStepChanged 3604"
+  },
+  {
+    "timestamp": "20260317-17:58:09:124",
+    "level": "Step_SPUtils",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | setTodayTotalDetailSteps=3604"
+  },
+  {
+    "timestamp": "20260317-17:58:09:751",
+    "level": "Step_ExtSDM",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | calculateCaloriesWithCache totalCalories=127200"
+  },
+  {
+    "timestamp": "20260317-17:58:09:884",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3604 5754 127200 240"
+  },
+  {
+    "timestamp": "20260317-17:58:10:999",
+    "level": "HiH_HiSyncUtil",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "73606871 | processHandleBroadcastAction action:android.intent.action.SCREEN_ON"
+  },
+  {
+    "timestamp": "20260317-17:58:11:871",
+    "level": "Step_ScreenUtil",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "65325677 | insertHiHealthData() bulkSaveDetailHiHealthData fail errorCode = 989,errorMessage = ERR_DATA_INSERT"
+  },
+  {
+    "timestamp": "20260317-17:58:12:936",
+    "level": "Step_StandReportReceiver",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "30002312 | REPORT : 3604 5838 127200 240"
+  },
+  {
+    "timestamp": "20260317-17:58:13:852",
+    "level": "Step_FlushableStepDataCache",
+    "server_id": "HEALTHCARE_SERVER",
+    "log_file": "healthcare_server.log",
+    "message": "19949280 | calculateAltitudeWithCache totalAltitude=240"
+  }
+]
