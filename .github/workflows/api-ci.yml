@@ -22,19 +22,19 @@ jobs:
           python-version: "3.12.3"
 
       - name: Install dependencies
-        working-directory: ./api
+        working-directory: ./backend/log-ingestion-api/
         run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/log-ingestion-api/requirements.txt
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Lint & Syntax Check
-        working-directory: ./api
+        working-directory: ./backend/log-ingestion-api/
         run: |
-          python -m py_compile $(git ls-files '*.py')
+          python3 -m py_compile $(git ls-files '*.py')
 
       - name: Start server (smoke test)
-        working-directory: ./api
+        working-directory: ./backend/log-ingestion-api/
         run: |
-          uvicorn main:app --host 0.0.0.0 --port 8080 --reload &
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
           sleep 5
-          curl -f http://localhost:8080 || exit 1
+          curl -f http://localhost:8000 || exit 1
