@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
-from app.models.log_models import LogCreate, LogInternal, LogResponse
+from app.models.log_models import LogCreate, LogResponse
 from app.services.log_service import LogService, get_log_service
 
 router = APIRouter()
