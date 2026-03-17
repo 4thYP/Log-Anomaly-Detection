@@ -21,25 +21,40 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
+      # --- PYTHON DEPENDENCY CACHE ---
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PIP_CACHE_DIR }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/log-ingestion-api/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # --- INSTALL DEPS ---
       - name: Install dependencies
         working-directory: ./backend/log-ingestion-api/
         run: |
           python3 -m pip install --upgrade pip
+          python3 -m pip config set global.cache-dir $PIP_CACHE_DIR
           python3 -m pip install -r requirements.txt
 
+      # --- LINT / SYNTAX CHECK ---
       - name: Lint & Syntax Check
         working-directory: ./backend/log-ingestion-api/
-        run: python3 -m py_compile $(git ls-files '*.py')
+        run: |
+          python3 -m py_compile $(git ls-files '*.py')
         shell: bash
 
+      # --- SMOKE TEST ---
       - name: Start FastAPI server (smoke test)
         working-directory: ./backend/log-ingestion-api/
         shell: bash
         run: |
-          python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+          python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
           sleep 5
           curl -f http://localhost:8000 || exit 1
