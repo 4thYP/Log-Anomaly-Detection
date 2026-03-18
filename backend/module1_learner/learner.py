@@ -21,7 +21,7 @@ class Learner:
     def __init__(self, server_name):
         self.server_name = server_name
         # FIXED: Correct paths - no extra '..'
-        self.dataset_path = f"datasets/{server_name}/"
+        self.dataset_path = f"../datasets/{server_name}/"
         self.patterns_path = f"patterns/{server_name}_patterns.json"
         self.config_path = f"config/{server_name}_config.json"
         
@@ -286,7 +286,7 @@ class Learner:
 def main():
     parser = argparse.ArgumentParser(description='Learn patterns from server logs')
     parser.add_argument('--server', required=True, 
-                       choices=['healthcare', 'db', 'api', 'auth', 'infra'],
+                       choices=['healthcare', 'db', 'api', 'auth', 'infra', 'hpc', 'linux', 'spark', 'windows'],
                        help='Server type to learn patterns for')
     
     args = parser.parse_args()

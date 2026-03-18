@@ -26,22 +26,55 @@ def load_config():
 
 
 def parse_log(filepath, server_id, line):
-    """Parse a log line into JSON format"""
-    parts = [p.strip() for p in line.split("|")]
-
-    if len(parts) < 3:
-        return None
-
-    timestamp = parts[0]
-    level = parts[1]
-    message = " | ".join(parts[2:])  # Handle cases where message might contain |
-
+    """Parse a log line into JSON format - handles different log types"""
+    
+    # List of month abbreviations for Linux log detection
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    # Check if it's a Linux log (starts with month)
+    parts = line.split()
+    if parts and parts[0] in months:
+        # Linux format: "Jun 14 15:16:01 combo sshd(pam_unix)[19939]: message"
+        if len(parts) >= 4:
+            timestamp = f"{parts[0]} {parts[1]} {parts[2]}"
+            component = parts[3]  # "combo" or service name
+            
+            # The rest is the message (might contain ":")
+            message_parts = parts[4:]
+            message = " ".join(message_parts)
+            
+            return {
+                "timestamp": timestamp,
+                "level": component,
+                "server_id": server_id,
+                "log_file": os.path.basename(filepath),
+                "message": message
+            }
+    else:
+        # Healthcare format (or other formats with | delimiter)
+        parts = [p.strip() for p in line.split("|")]
+        
+        if len(parts) >= 3:
+            timestamp = parts[0]
+            level = parts[1]
+            message = " | ".join(parts[2:])  # Handle cases where message might contain |
+            
+            return {
+                "timestamp": timestamp,
+                "level": level,
+                "server_id": server_id,
+                "log_file": os.path.basename(filepath),
+                "message": message
+            }
+    
+    # If we can't parse, return a generic entry
     return {
-        "timestamp": timestamp,
-        "level": level,
+        "timestamp": "unknown",
+        "level": "unknown",
         "server_id": server_id,
         "log_file": os.path.basename(filepath),
-        "message": message
+        "message": line
     }
 
 
@@ -105,7 +138,7 @@ class LogHandler(FileSystemEventHandler):
                         parsed = parse_log(filepath, server_id, line)
                         if parsed:
                             write_log(parsed)
-                            # Commented out the verbose printing
+                            # Uncomment for debugging
                             # print(f"Processed: {server_id} - {parsed['level']} - {parsed['message'][:50]}...")
                 
                 # Update position
@@ -124,6 +157,7 @@ def monitor_existing_files(handler):
 def start_daemon():
     """Start the monitoring daemon"""
     print(f"Daemon started. Monitoring directory: {LOG_DIR}")
+    print(f"Absolute path: {os.path.abspath(LOG_DIR)}")
     print(f"Output file: {OUTPUT_FILE}")
     
     # Create logs directory if it doesn't exist
@@ -132,6 +166,8 @@ def start_daemon():
     # Load server configurations
     server_map = load_config()
     print(f"Loaded {len(server_map)} server configurations")
+    for log_file, server_id in server_map.items():
+        print(f"  - {server_id}: {log_file}")
     
     # Create event handler
     event_handler = LogHandler(server_map)
