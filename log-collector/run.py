@@ -37,7 +37,9 @@ time.sleep(2)
 
 servers = [
     "module2_generator/servers/healthcare_server.py",
-    "module2_generator/servers/linux_server.py"
+    "module2_generator/servers/linux_server.py",
+    "module2_generator/servers/windows_server.py",
+    "module2_generator/servers/zookeeper_server.py"
 ]
 
 # Start all servers

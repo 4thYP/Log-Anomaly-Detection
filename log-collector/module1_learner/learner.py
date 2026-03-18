@@ -286,7 +286,7 @@ class Learner:
 def main():
     parser = argparse.ArgumentParser(description='Learn patterns from server logs')
     parser.add_argument('--server', required=True, 
-                       choices=['healthcare', 'db', 'api', 'auth', 'infra', 'hpc', 'linux', 'spark', 'windows'],
+                       choices=['healthcare', 'db', 'api', 'auth', 'infra', 'hpc', 'linux', 'spark', 'windows', 'zookeeper'],
                        help='Server type to learn patterns for')
     
     args = parser.parse_args()

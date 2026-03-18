@@ -32,8 +32,9 @@ def parse_log(filepath, server_id, line):
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     
-    # Check if it's a Linux log (starts with month)
     parts = line.split()
+    
+    # Check if it's a Linux log (starts with month)
     if parts and parts[0] in months:
         # Linux format: "Jun 14 15:16:01 combo sshd(pam_unix)[19939]: message"
         if len(parts) >= 4:
@@ -51,22 +52,63 @@ def parse_log(filepath, server_id, line):
                 "log_file": os.path.basename(filepath),
                 "message": message
             }
-    else:
-        # Healthcare format (or other formats with | delimiter)
-        parts = [p.strip() for p in line.split("|")]
-        
-        if len(parts) >= 3:
-            timestamp = parts[0]
-            level = parts[1]
-            message = " | ".join(parts[2:])  # Handle cases where message might contain |
+    
+    # Check if it's a Zookeeper log (has | delimiter with component that may contain colon)
+    elif '|' in line:
+        pipe_parts = line.split('|', 2)
+        if len(pipe_parts) >= 3:
+            timestamp = pipe_parts[0].strip()
+            component = pipe_parts[1].strip()
+            message = pipe_parts[2].strip()
             
             return {
                 "timestamp": timestamp,
-                "level": level,
+                "level": component,
                 "server_id": server_id,
                 "log_file": os.path.basename(filepath),
                 "message": message
             }
+    
+    # Check if it's a Windows log (starts with date like "2016-09-28" and has comma)
+    elif len(parts) >= 3 and parts[0][0].isdigit() and '-' in parts[0] and ',' in line:
+        # Windows format: "2016-09-28 04:30:30, Info                  CBS    message"
+        if ',' in line:
+            # Split at the first comma to separate timestamp from rest
+            timestamp_part, rest = line.split(',', 1)
+            
+            # Rest usually has format: " Info                  CBS    message"
+            rest_parts = rest.strip().split()
+            if len(rest_parts) >= 2:
+                level = rest_parts[0]  # "Info", "Warning", "Error"
+                component = rest_parts[1]  # "CBS", "CSI", etc.
+                
+                # Message is everything after component
+                message_start = rest.find(component) + len(component)
+                message = rest[message_start:].strip()
+                
+                return {
+                    "timestamp": timestamp_part.strip(),
+                    "level": level,
+                    "server_id": server_id,
+                    "log_file": os.path.basename(filepath),
+                    "message": f"{component} {message}"
+                }
+    
+    # Healthcare format (or other formats with | delimiter) - fallback
+    parts = [p.strip() for p in line.split("|")]
+    
+    if len(parts) >= 3:
+        timestamp = parts[0]
+        level = parts[1]
+        message = " | ".join(parts[2:])
+        
+        return {
+            "timestamp": timestamp,
+            "level": level,
+            "server_id": server_id,
+            "log_file": os.path.basename(filepath),
+            "message": message
+        }
     
     # If we can't parse, return a generic entry
     return {
@@ -75,8 +117,7 @@ def parse_log(filepath, server_id, line):
         "server_id": server_id,
         "log_file": os.path.basename(filepath),
         "message": line
-    }
-
+    }   
 
 def write_log(entry):
     """Write log entry to daemon.json"""
