@@ -3,10 +3,10 @@ name: API CI
 on:
   push:
     paths:
-      - "backend/log-ingestion-api/**"
+      - "log-ingestion-api/**"
   pull_request:
     paths:
-      - "backend/log-ingestion-api/**"
+      - "log-ingestion-api/**"
 
 jobs:
   test-api:
@@ -27,21 +27,21 @@ jobs:
 
       # --- INSTALL DEPS ---
       - name: Install dependencies
-        working-directory: ./backend/log-ingestion-api/
+        working-directory: ./log-ingestion-api/
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
       # --- LINT / SYNTAX CHECK ---
       - name: Lint & Syntax Check
-        working-directory: ./backend/log-ingestion-api/
+        working-directory: ./log-ingestion-api/
         shell: bash
         run: |
           python3 -m py_compile $(git ls-files '*.py')
 
       # --- SMOKE TEST ---
       - name: Start FastAPI server (smoke test)
-        working-directory: ./backend/log-ingestion-api/
+        working-directory: ./log-ingestion-api/
         shell: bash
         run: |
           python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &

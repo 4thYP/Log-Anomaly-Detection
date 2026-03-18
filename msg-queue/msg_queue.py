@@ -2,13 +2,27 @@
 # """
 # # from redis import asyncio 
 # import redis
+# from dotenv import load_dotenv
+# import os
 #
+# # Load .env file
+# load_dotenv()
+#
+# # Read values from environment
+# redis_host = os.getenv("REDIS_HOST")
+# redis_port = os.getenv("REDIS_PORT")
+# redis_user = os.getenv("REDIS_USERNAME")
+# redis_pass = os.getenv("REDIS_PASSWORD")
+# redis_db = os.getenv("REDIS_DB")
+#
+# # Connect with credentials
 # r = redis.Redis(
-#     host='redis-16124.crce281.ap-south-1-3.ec2.cloud.redislabs.com',
-#     port=16124,
+#     host=redis_host,
+#     port=redis_port,
 #     decode_responses=True,
-#     username="default",
-#     password="136AMdYr8UIzzA0o5n2qQZIjFgBpyGb9",
+#     username=redis_user,
+#     password=redis_pass,
+#     db=redis_db
 # )
 #
 # success = r.set('foo', 'baer')
