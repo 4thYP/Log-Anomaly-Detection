@@ -23,6 +23,14 @@
         {
             "server_id": "LINUX_SERVER",
             "log_file": "logs/linux_server.log"
+        },
+        {
+          "server_id": "WINDOWS_SERVER",
+          "log_file": "logs/windows_server.log"
+        },
+        {
+          "server_id": "ZOOKEEPER_SERVER",
+          "log_file": "logs/zookeeper_server.log"
         }
     ]
 }
