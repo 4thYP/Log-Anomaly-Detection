@@ -25,8 +25,26 @@ def load_config():
         return {}
 
 
-def parse_log(filepath, server_id, line):
+def extract_sid_from_file(filepath):
+    """Extract SID from the first line of the log file"""
+    try:
+        with open(filepath, 'r') as f:
+            first_line = f.readline().strip()
+            if first_line.startswith('# SID:'):
+                sid = first_line.replace('# SID:', '').strip()
+                print(f"✅ Extracted SID: {sid} from {filepath}")
+                return sid
+    except Exception as e:
+        print(f"⚠️ Error extracting SID: {e}")
+    return None
+
+
+def parse_log(filepath, server_id, line, sid=None):
     """Parse a log line into JSON format - handles different log types"""
+    
+    # Skip SID lines
+    if line.startswith('# SID:'):
+        return None
     
     # List of month abbreviations for Linux log detection
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -49,12 +67,13 @@ def parse_log(filepath, server_id, line):
                 "timestamp": timestamp,
                 "level": component,
                 "server_id": server_id,
+                "sid": sid,
                 "log_file": os.path.basename(filepath),
                 "message": message
             }
     
     # Check if it's a Zookeeper log (has | delimiter with component that may contain colon)
-    elif '|' in line:
+    if '|' in line:
         pipe_parts = line.split('|', 2)
         if len(pipe_parts) >= 3:
             timestamp = pipe_parts[0].strip()
@@ -65,12 +84,13 @@ def parse_log(filepath, server_id, line):
                 "timestamp": timestamp,
                 "level": component,
                 "server_id": server_id,
+                "sid": sid,
                 "log_file": os.path.basename(filepath),
                 "message": message
             }
     
     # Check if it's a Windows log (starts with date like "2016-09-28" and has comma)
-    elif len(parts) >= 3 and parts[0][0].isdigit() and '-' in parts[0] and ',' in line:
+    if len(parts) >= 3 and parts[0][0].isdigit() and '-' in parts[0] and ',' in line:
         # Windows format: "2016-09-28 04:30:30, Info                  CBS    message"
         if ',' in line:
             # Split at the first comma to separate timestamp from rest
@@ -90,6 +110,7 @@ def parse_log(filepath, server_id, line):
                     "timestamp": timestamp_part.strip(),
                     "level": level,
                     "server_id": server_id,
+                    "sid": sid,
                     "log_file": os.path.basename(filepath),
                     "message": f"{component} {message}"
                 }
@@ -106,6 +127,7 @@ def parse_log(filepath, server_id, line):
             "timestamp": timestamp,
             "level": level,
             "server_id": server_id,
+            "sid": sid,
             "log_file": os.path.basename(filepath),
             "message": message
         }
@@ -115,9 +137,11 @@ def parse_log(filepath, server_id, line):
         "timestamp": "unknown",
         "level": "unknown",
         "server_id": server_id,
+        "sid": sid,
         "log_file": os.path.basename(filepath),
         "message": line
-    }   
+    }
+
 
 def write_log(entry):
     """Write log entry to daemon.json"""
@@ -153,10 +177,26 @@ class LogHandler(FileSystemEventHandler):
     def __init__(self, server_map):
         self.server_map = server_map
         self.file_positions = {}  # Store last read position for each file
+        # Store SIDs for each server
+        self.server_sids = {}  # Map log_file to SID
         
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith('.log'):
             self.process_file(event.src_path)
+    
+    def get_sid_for_file(self, filepath):
+        """Get SID for a file, either from cache or by reading the file"""
+        if filepath in self.server_sids:
+            return self.server_sids[filepath]
+        
+        # Try to extract SID from file
+        sid = extract_sid_from_file(filepath)
+        if sid:
+            self.server_sids[filepath] = sid
+            return sid
+        
+        # Fallback
+        return None
     
     def process_file(self, filepath):
         """Process new lines in a log file"""
@@ -164,6 +204,9 @@ class LogHandler(FileSystemEventHandler):
             # Get server ID from config
             log_file_relative = os.path.relpath(filepath, start=os.getcwd())
             server_id = self.server_map.get(log_file_relative, "UNKNOWN")
+            
+            # Get SID for this file
+            sid = self.get_sid_for_file(filepath)
             
             # Get last read position
             last_pos = self.file_positions.get(filepath, 0)
@@ -176,11 +219,11 @@ class LogHandler(FileSystemEventHandler):
                 for line in new_lines:
                     line = line.strip()
                     if line:
-                        parsed = parse_log(filepath, server_id, line)
+                        parsed = parse_log(filepath, server_id, line, sid)
                         if parsed:
                             write_log(parsed)
                             # Uncomment for debugging
-                            # print(f"Processed: {server_id} - {parsed['level']} - {parsed['message'][:50]}...")
+                            # print(f"Processed: {server_id} - {sid} - {parsed['message'][:50]}...")
                 
                 # Update position
                 self.file_positions[filepath] = f.tell()

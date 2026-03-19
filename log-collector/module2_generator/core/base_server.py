@@ -9,31 +9,70 @@ import random
 import time
 from datetime import datetime
 import os
+import sys
+import threading
+
+# Add path to import sid_generator
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from sid_generator import generate_sid
 
 class BaseServer:
     def __init__(self, server_type, log_file, patterns_file):
+        print(f"🔍 DEBUG - Initializing {server_type} server")
+        print(f"🔍 DEBUG - Current working directory: {os.getcwd()}")
+        
         self.server_type = server_type
-    
-        # Get the absolute path to the backend directory
-        # Current file: .../backend/module2_generator/core/base_server.py
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Go up two levels to get to backend/
-        backend_dir = os.path.dirname(os.path.dirname(current_dir))
-    
-        # Always write logs to backend/logs/
-        self.log_file = os.path.join(backend_dir, "logs", log_file)
-    
+        # Always put logs in logs/ directory
+        self.log_file = os.path.join("logs", log_file)
         self.patterns_file = patterns_file
+        
+        # Generate unique SID for this server instance with retry logic
+        print(f"🔍 DEBUG - About to generate SID for {server_type}")
+        self.sid = self.generate_sid_with_retry(server_type)
+        print(f"🔑 Server SID: {self.sid}")
+        
         self.patterns = self.load_patterns()
         self.state = {}  # Internal state variables
         self.log_count = 0
         self.max_logs = 20  # Generate 20 logs by default
-    
-        # Ensure the logs directory exists
-        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-    
+        self.lock = threading.Lock()  # Add lock for thread safety
+        
+        # Ensure the directory for the log file exists
+        log_dir = os.path.dirname(self.log_file)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        # Write SID as first line in log file
+        self.write_sid_to_log()
+        
         print(f"✅ {server_type} server initialized")
         print(f"📁 Log file: {self.log_file}")
+    
+    def write_sid_to_log(self):
+        """Write the SID as the first line of the log file"""
+        try:
+            # Create file with SID as first line
+            with open(self.log_file, 'w') as f:
+                f.write(f"# SID: {self.sid}\n")
+                f.flush()
+            print(f"📝 SID written to {self.log_file}")
+        except Exception as e:
+            print(f"⚠️  Could not write SID to log: {e}")
+    
+    def generate_sid_with_retry(self, server_type, max_retries=3):
+        """Generate SID with retry logic to handle concurrent access"""
+        for attempt in range(max_retries):
+            try:
+                return generate_sid(server_type)
+            except Exception as e:
+                print(f"⚠️  SID generation attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(0.5)  # Wait half a second before retrying
+                else:
+                    # Fallback to timestamp-based SID
+                    fallback_sid = f"FALLBACK_{server_type}_{int(time.time())}_{random.randint(1000,9999)}"
+                    print(f"⚠️  Using fallback SID: {fallback_sid}")
+                    return fallback_sid
 
     def load_patterns(self):
         """Load learned patterns from JSON file"""
@@ -58,7 +97,7 @@ class BaseServer:
         except Exception as e:
             print(f"⚠️  Error loading patterns: {e}")
             return self.get_fallback_patterns()
-    
+
     def get_fallback_patterns(self):
         """Provide basic patterns if file not found"""
         return {
@@ -73,26 +112,26 @@ class BaseServer:
                 }
             }
         }
-    
+
     def generate_timestamp(self):
         """Generate realistic timestamp"""
         now = datetime.now()
         return now.strftime("%Y%m%d-%H:%M:%S") + f":{random.randint(100,999)}"
-    
+
     def get_random_component(self):
         """Get random component based on learned frequencies"""
         components = self.patterns.get('components', {}).get('by_frequency', {})
         if components:
             return random.choice(list(components.keys()))
         return f"{self.server_type}_component"
-    
+
     def get_random_template(self):
         """Get random log template based on frequencies"""
         templates = self.patterns.get('templates', {}).get('by_frequency', {})
         if templates:
             return random.choice(list(templates.keys()))
         return f"{self.server_type} log message <*>"
-    
+
     def fill_template(self, template):
         """Replace <*> with realistic values"""
         # Replace each <*> with a random number
@@ -114,7 +153,7 @@ class BaseServer:
             template = template.replace('<*>', str(value), 1)
         
         return template
-    
+
     def get_next_counter(self, name, min_val, max_val):
         """Get next value for a counter (increments realistically)"""
         key = f"counter_{name}"
@@ -126,7 +165,7 @@ class BaseServer:
             if self.state[key] > max_val:
                 self.state[key] = min_val
         return self.state[key]
-    
+
     def apply_causal_chain(self):
         """Apply learned causal chains to generate related logs"""
         chains = self.patterns.get('causal_chains', {}).get('chains', [])
@@ -135,7 +174,7 @@ class BaseServer:
             chain = random.choice(chains[:5])  # Top 5 chains
             return chain.get('pattern', [])
         return None
-    
+
     def generate_log_line(self):
         """Generate a single log line - to be overridden by child classes"""
         component = self.get_random_component()
@@ -148,7 +187,7 @@ class BaseServer:
             'user_id': str(random.randint(10000000, 99999999)),
             'message': message
         }
-    
+
     def write_log(self, log_data):
         """Write log to file - handles different log formats"""
         # Skip if log_data has skip flag (for chain events that already wrote themselves)
@@ -161,22 +200,33 @@ class BaseServer:
             log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['user_id']}|{log_data['message']}"
         elif self.server_type == 'linux':
             # Linux format: timestamp component process: message
-            # Example: Jun 14 15:16:01 combo sshd(pam_unix)[19939]: authentication failure...
             process = log_data.get('process', '')
             if process:
                 log_line = f"{log_data['timestamp']} {log_data['component']} {process}: {log_data['message']}"
             else:
                 log_line = f"{log_data['timestamp']} {log_data['component']}: {log_data['message']}"
+        elif self.server_type == 'windows':
+            # Windows format: timestamp|component|message
+            log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['message']}"
+        elif self.server_type == 'zookeeper':
+            # Zookeeper format: timestamp|component|message
+            log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['message']}"
+        elif self.server_type == 'hpc':
+            # HPC format (will be designed later)
+            log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['message']}"
         else:
             # Default format for other servers
             log_line = f"{log_data['timestamp']}|{log_data['component']}|{log_data['message']}"
+        
+        # Ensure logs directory exists
+        os.makedirs("logs", exist_ok=True)
         
         with open(self.log_file, 'a') as f:
             f.write(log_line + "\n")
             f.flush()
         
         self.log_count += 1
-    
+
     def run(self):
         """Main generation loop"""
         print(f"\n🚀 Starting {self.server_type} server...")
