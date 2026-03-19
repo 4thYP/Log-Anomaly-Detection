@@ -40,106 +40,35 @@ def extract_sid_from_file(filepath):
 
 
 def parse_log(filepath, server_id, line, sid=None):
-    """Parse a log line into JSON format - handles different log types"""
+    """Parse a log line - now returns simplified format with full message"""
     
     # Skip SID lines
     if line.startswith('# SID:'):
         return None
     
-    # List of month abbreviations for Linux log detection
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    # Extract timestamp based on log type
+    timestamp = "unknown"
     
-    parts = line.split()
-    
-    # Check if it's a Linux log (starts with month)
-    if parts and parts[0] in months:
-        # Linux format: "Jun 14 15:16:01 combo sshd(pam_unix)[19939]: message"
-        if len(parts) >= 4:
-            timestamp = f"{parts[0]} {parts[1]} {parts[2]}"
-            component = parts[3]  # "combo" or service name
-            
-            # The rest is the message (might contain ":")
-            message_parts = parts[4:]
-            message = " ".join(message_parts)
-            
-            return {
-                "timestamp": timestamp,
-                "level": component,
-                "server_id": server_id,
-                "sid": sid,
-                "log_file": os.path.basename(filepath),
-                "message": message
-            }
-    
-    # Check if it's a Zookeeper log (has | delimiter with component that may contain colon)
+    # Try to extract timestamp from different formats
     if '|' in line:
-        pipe_parts = line.split('|', 2)
-        if len(pipe_parts) >= 3:
-            timestamp = pipe_parts[0].strip()
-            component = pipe_parts[1].strip()
-            message = pipe_parts[2].strip()
-            
-            return {
-                "timestamp": timestamp,
-                "level": component,
-                "server_id": server_id,
-                "sid": sid,
-                "log_file": os.path.basename(filepath),
-                "message": message
-            }
+        # For pipe-delimited logs (healthcare, windows, zookeeper)
+        parts = line.split('|', 1)
+        timestamp = parts[0].strip()
+    else:
+        # For Linux logs (starts with month)
+        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        parts = line.split()
+        if parts and parts[0] in months and len(parts) >= 3:
+            timestamp = f"{parts[0]} {parts[1]} {parts[2]}"
     
-    # Check if it's a Windows log (starts with date like "2016-09-28" and has comma)
-    if len(parts) >= 3 and parts[0][0].isdigit() and '-' in parts[0] and ',' in line:
-        # Windows format: "2016-09-28 04:30:30, Info                  CBS    message"
-        if ',' in line:
-            # Split at the first comma to separate timestamp from rest
-            timestamp_part, rest = line.split(',', 1)
-            
-            # Rest usually has format: " Info                  CBS    message"
-            rest_parts = rest.strip().split()
-            if len(rest_parts) >= 2:
-                level = rest_parts[0]  # "Info", "Warning", "Error"
-                component = rest_parts[1]  # "CBS", "CSI", etc.
-                
-                # Message is everything after component
-                message_start = rest.find(component) + len(component)
-                message = rest[message_start:].strip()
-                
-                return {
-                    "timestamp": timestamp_part.strip(),
-                    "level": level,
-                    "server_id": server_id,
-                    "sid": sid,
-                    "log_file": os.path.basename(filepath),
-                    "message": f"{component} {message}"
-                }
-    
-    # Healthcare format (or other formats with | delimiter) - fallback
-    parts = [p.strip() for p in line.split("|")]
-    
-    if len(parts) >= 3:
-        timestamp = parts[0]
-        level = parts[1]
-        message = " | ".join(parts[2:])
-        
-        return {
-            "timestamp": timestamp,
-            "level": level,
-            "server_id": server_id,
-            "sid": sid,
-            "log_file": os.path.basename(filepath),
-            "message": message
-        }
-    
-    # If we can't parse, return a generic entry
+    # Return simplified format with FULL original message
     return {
-        "timestamp": "unknown",
-        "level": "unknown",
-        "server_id": server_id,
+        "timestamp": timestamp,
+        "server_type": server_id,
         "sid": sid,
-        "log_file": os.path.basename(filepath),
-        "message": line
+        "message": line,  # The COMPLETE original log line
+        "log_file": os.path.basename(filepath)
     }
 
 
@@ -223,7 +152,7 @@ class LogHandler(FileSystemEventHandler):
                         if parsed:
                             write_log(parsed)
                             # Uncomment for debugging
-                            # print(f"Processed: {server_id} - {sid} - {parsed['message'][:50]}...")
+                            # print(f"Processed: {server_id} - {sid}")
                 
                 # Update position
                 self.file_positions[filepath] = f.tell()
