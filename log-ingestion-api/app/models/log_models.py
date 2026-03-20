@@ -11,16 +11,22 @@ class LogLevel(str, Enum):
     ERROR = "ERROR"
     DEBUG = "DEBUG"
 
+class ServerType(str, Enum):
+    LINUX = "linux"
+    WINDOWS = "windows"
+    HPC = "hpc"
+    HEALTHAPP = "healthapp"
+    ZOOKEEPER = "zookeeper"
+
 # Incoming log schema (from client)
 class LogCreate(BaseModel):
+    sid: str  # server id
     timestamp: datetime
     level: LogLevel
-    service: str = Field(..., min_length=2)
-    message: str = Field(..., min_length=1)
+    server_type: ServerType
+    log_file: str
+    message: str
 
-    user_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    action: Optional[str] = None
     metadata: Optional[Dict] = None
 
 # Internal processed log schema
