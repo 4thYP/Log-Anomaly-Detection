@@ -97,3 +97,6 @@ target/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Miscellaneous
+*:Zone.Identifier
