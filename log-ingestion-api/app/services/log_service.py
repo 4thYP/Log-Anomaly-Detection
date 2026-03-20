@@ -3,13 +3,15 @@ from app.models.log_models import LogCreate, LogInternal
 from app.repositories.log_repository import LogRepository
 from app.parsers.log_parser import LogParser
 from app.parsers.parser_factory import ParserFactory
-from app.features.feature_extractor import FeatureExtractor
+from app.features.linux_feature_extractor import LinuxFeatureExtractor
+from app.sequences.sequence_builder import SequenceBuilder
 
 class LogService:
     def __init__(self, repository: LogRepository):
         self.repository = repository
         self.parser = LogParser()
-        self.feature_extractor = FeatureExtractor()
+        self.feature_extractor = LinuxFeatureExtractor()
+        self.sequence_builder = SequenceBuilder(sequence_length=5)
 
     async def create_log(self, log_data: LogCreate) -> LogInternal:
         # Business logic for creating a log.
@@ -28,9 +30,18 @@ class LogService:
         }
 
         # Extract ML features
-        # features = self.feature_extractor.extract(internal_log)
-        #
-        # internal_log.metadata["features"] = features
+        features = self.feature_extractor.extract(internal_log)
+
+        internal_log.metadata["features"] = features
+
+        # Build sequence
+        sequence_result = self.sequence_builder.build_sequence(internal_log)
+
+        internal_log.metadata["sequence_ready"] = sequence_result["ready"]
+
+        if sequence_result["ready"]:
+            internal_log.metadata["sequence"] = sequence_result["sequence"]
+
 
         await self.repository.save(internal_log)
         return internal_log
