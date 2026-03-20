@@ -1,0 +1,319 @@
+name: Log Collector CI Pipeline
+
+on:
+  push:
+    paths:
+      - 'log-collector/**'
+      - '.github/workflows/log-collector-ci.yml'
+  pull_request:
+    paths:
+      - 'log-collector/**'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test-log-collector:
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Display structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Log-collector contents:"
+          ls -la log-collector/
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            gnupg \
+            lsb-release \
+            systemd \
+            redis-tools
+
+      - name: Install and configure Fluent Bit
+        run: |
+          # Add Fluent Bit repository
+          curl -fsSL https://packages.fluentbit.io/fluentbit.key | sudo gpg --dearmor -o /usr/share/keyrings/fluentbit-keyring.gpg
+          
+          # Get Ubuntu codename
+          codename=$(lsb_release -cs)
+          
+          # Add repository
+          echo "deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/ubuntu/${codename} ${codename} main" | sudo tee /etc/apt/sources.list.d/fluent-bit.list
+          
+          # Install Fluent Bit
+          sudo apt-get update
+          sudo apt-get install -y fluent-bit
+          
+          # Verify installation
+          echo "✅ Fluent Bit installed at: $(which fluent-bit || echo '/opt/fluent-bit/bin/fluent-bit')"
+          /opt/fluent-bit/bin/fluent-bit --version
+
+          # Create symlink for easier access (optional)
+          sudo ln -sf /opt/fluent-bit/bin/fluent-bit /usr/local/bin/fluent-bit
+
+          # Verify symlink works
+          fluent-bit --version || echo "⚠️ Symlink may not work, will use full path"
+
+      - name: Copy Fluent Bit configuration
+        run: |
+          # Ensure the config file exists
+          if [ ! -f "log-collector/pass/daemon.conf" ]; then
+            echo "❌ daemon.conf not found in log-collector/"
+            exit 1
+          fi
+          
+          # Copy config to Fluent Bit directory
+          sudo cp log-collector/pass/daemon.conf /etc/fluent-bit/fluent-bit.conf
+          
+          # Verify the config was copied
+          echo "✅ Fluent Bit config copied:"
+          cat /etc/fluent-bit/fluent-bit.conf
+
+      - name: Install Python dependencies
+        run: |
+          cd log-collector
+          pip install --upgrade pip
+          pip install -r requirements.txt || echo "No requirements.txt found, installing minimal dependencies"
+          
+          # Also install dependencies for msg-queue
+          cd ../msg-queue && pip install -r requirements.txt || true
+
+      - name: Update Fluent Bit config with absolute paths
+        run: |
+          # Get absolute path for logs directory
+          ABSOLUTE_PATH=$(pwd)/log-collector
+          
+          # Update the config with absolute path
+          sudo sed -i "s|Path .*|Path        ${ABSOLUTE_PATH}/daemon/daemon.json|" /etc/fluent-bit/fluent-bit.conf
+          
+          echo "✅ Updated Fluent Bit config with path: ${ABSOLUTE_PATH}/daemon/daemon.json"
+          echo "Current config:"
+          sudo cat /etc/fluent-bit/fluent-bit.conf
+
+      - name: Start Fluent Bit
+        run: |
+          # Start Fluent Bit in background
+          sudo fluent-bit -c /etc/fluent-bit/fluent-bit.conf -v &
+          FLUENT_BIT_PID=$!
+          
+          # Give it time to start
+          sleep 5
+          
+          # Check if it's running
+          if ps -p $FLUENT_BIT_PID > /dev/null; then
+            echo "✅ Fluent Bit started successfully with PID: $FLUENT_BIT_PID"
+          else
+            echo "❌ Fluent Bit failed to start"
+            exit 1
+          fi
+          
+          # Save PID for later
+          echo $FLUENT_BIT_PID > fluent-bit.pid
+
+      - name: Start Redis Ingest API with env vars
+        run: |
+          cd log-collector
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
+          export REDIS_USERNAME=
+          export REDIS_PASSWORD=
+          export REDIS_DB=0
+
+          python logs/redis_ingest.py &
+          INGEST_PID=$!
+          
+          # Wait for API to start
+          sleep 5
+          
+          # Check if API is running
+          if curl -s http://localhost:5000/ingest > /dev/null 2>&1; then
+            echo "✅ Redis Ingest API is running"
+          else
+            echo "⚠️ API health check failed, but continuing..."
+          fi
+          
+          echo $INGEST_PID > redis-ingest.pid
+
+      - name: Start Message Queue Consumer with env vars
+        run: |
+          cd msg-queue
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
+          export REDIS_USERNAME=
+          export REDIS_PASSWORD=
+          export REDIS_DB=0
+
+          python msg_queue.py > ../msg-queue-output.log 2>&1 &
+          MSG_QUEUE_PID=$!
+          
+          sleep 3
+          echo $MSG_QUEUE_PID > ../msg-queue.pid
+          echo "✅ Message queue consumer started"
+
+      - name: Run server creation and log generation
+        run: |
+          cd log-collector
+          python clean.py
+
+          
+          # Create servers using run.py (option 1)
+          echo "Creating servers..."
+          
+          # Use expect-like input to automate server creation
+          python -c "
+          import subprocess
+          import time
+
+          # Start run.py process
+          proc = subprocess.Popen(['python', 'run.py'], 
+                                  stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  text=True)
+
+          # Wait for prompt
+          time.sleep(2)
+
+          # Send inputs: 1 (add servers), then counts for each server type
+          proc.stdin.write('1\n')  # Option 1: Add servers
+          proc.stdin.flush()
+          time.sleep(1)
+
+          proc.stdin.write('2\n')  # 2 Healthcare servers
+          proc.stdin.flush()
+          time.sleep(1)
+
+          proc.stdin.write('2\n')  # 2 Zookeeper servers
+          proc.stdin.flush()
+          time.sleep(1)
+
+          proc.stdin.write('1\n')  # 1 Windows server
+          proc.stdin.flush()
+          time.sleep(1)
+
+          proc.stdin.write('1\n')  # 1 Linux server
+          proc.stdin.flush()
+          time.sleep(2)
+
+          # Now run the servers (option 4)
+          proc.stdin.write('4\n')  # Option 4: Run servers
+          proc.stdin.flush()
+
+          # Give servers time to generate logs
+          time.sleep(30)
+
+          # Try to terminate gracefully
+          proc.terminate()
+          proc.wait(timeout=5)
+
+          print('Server creation and log generation completed')
+          "
+
+      - name: Verify log generation
+        run: |
+          cd log-collector
+          
+          # Check daemon.json
+          if [ -f "daemon/daemon.json" ]; then
+            echo "✅ daemon.json exists"
+            echo "   Size: $(wc -c < daemon/daemon.json) bytes"
+            echo "   Content preview:"
+            head -20 daemon/daemon.json
+          else
+            echo "❌ daemon.json not found"
+          fi
+
+      - name: Verify Fluent Bit is processing logs
+        run: |
+          # Check Fluent Bit logs
+          if [ -f "fluent-bit.pid" ]; then
+            FLUENT_PID=$(cat fluent-bit.pid)
+            if ps -p $FLUENT_PID > /dev/null; then
+              echo "✅ Fluent Bit is still running"
+            else
+              echo "❌ Fluent Bit is not running"
+            fi
+          fi
+          
+          # Check if logs are being sent to Redis
+          echo "Checking Redis for ingested logs..."
+          sleep 10  # Give time for logs to be processed
+          
+          redis-cli -h localhost -p 6379 LLEN lis-logs || echo "Could not connect to Redis"
+          
+          # Get count of logs in Redis
+          LOG_COUNT=$(redis-cli -h localhost -p 6379 LLEN lis-logs 2>/dev/null || echo "0")
+          echo "📊 Logs in Redis: $LOG_COUNT"
+
+      - name: Check message queue output
+        run: |
+          if [ -f "msg-queue-output.log" ]; then
+            echo "Message queue output (last 20 lines):"
+            tail -20 msg-queue-output.log
+          else
+            echo "No message queue output found"
+          fi
+
+      - name: Cleanup processes
+        if: always()
+        run: |
+          # Kill all background processes
+          pkill -f "fluent-bit" || true
+          pkill -f "python.*redis_ingest" || true
+          pkill -f "python.*msg_queue" || true
+          pkill -f "python.*run.py" || true
+          pkill -f "python.*server.*.py" || true
+          python log-collector/clean.py
+          
+          echo "✅ Cleanup completed"
+
+      - name: Final status check
+        if: always()
+        run: |
+          echo "==================================="
+          echo "🔍 CI PIPELINE SUMMARY"
+          echo "==================================="
+          
+          # Check if logs were generated
+          if [ -f "log-collector/daemon/daemon.json" ]; then
+            LOG_COUNT=$(wc -l < log-collector/daemon/daemon.json)
+            echo "✅ daemon.json exists with approximately $LOG_COUNT lines"
+          else
+            echo "❌ daemon.json was not generated"
+          fi
+          
+          # Check Redis
+          REDIS_LOGS=$(redis-cli -h localhost -p 6379 LLEN lis-logs 2>/dev/null || echo "0")
+          echo "📊 Total logs in Redis: $REDIS_LOGS"
+          
+          if [ "$REDIS_LOGS" -gt "0" ]; then
+            echo "✅ END-TO-END TEST PASSED: Logs generated -> Fluent Bit -> Redis"
+          else
+            echo "❌ END-TO-END TEST FAILED: No logs reached Redis"
+          fi
+          
+          echo "==================================="

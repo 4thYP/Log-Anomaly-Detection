@@ -1,37 +1,3 @@
-# """Basic connection example.
-# """
-# # from redis import asyncio 
-# import redis
-# from dotenv import load_dotenv
-# import os
-#
-# # Load .env file
-# load_dotenv()
-#
-# # Read values from environment
-# redis_host = os.getenv("REDIS_HOST")
-# redis_port = os.getenv("REDIS_PORT")
-# redis_user = os.getenv("REDIS_USERNAME")
-# redis_pass = os.getenv("REDIS_PASSWORD")
-# redis_db = os.getenv("REDIS_DB")
-#
-# # Connect with credentials
-# r = redis.Redis(
-#     host=redis_host,
-#     port=redis_port,
-#     decode_responses=True,
-#     username=redis_user,
-#     password=redis_pass,
-#     db=redis_db
-# )
-#
-# success = r.set('foo', 'baer')
-# # True
-#
-# result = r.get('foo')
-# print(result)
-# # >>> bar
-
 import json
 import redis
 from dotenv import load_dotenv
@@ -47,22 +13,23 @@ REDIS_PASSWORD = "mypassword"
 REDIS_DB = 0
 
 # Load .env file
-load_dotenv()
+if os.path.exists('.env'):
+    load_dotenv()
 
 # Read values from environment
-redis_host = os.getenv("REDIS_HOST")
-redis_port = os.getenv("REDIS_PORT")
-redis_user = os.getenv("REDIS_USERNAME")
-redis_pass = os.getenv("REDIS_PASSWORD")
-redis_db = os.getenv("REDIS_DB")
+redis_host = os.getenv("REDIS_HOST", "127.0.0.1")
+redis_port = os.getenv("REDIS_PORT", 6379)
+redis_user = os.getenv("REDIS_USERNAME", "myuser")
+redis_pass = os.getenv("REDIS_PASSWORD", "mypassword")
+redis_db = os.getenv("REDIS_DB", 0)
 
 # Connect with credentials
 r = redis.Redis(
     host=redis_host,
     port=redis_port,
     decode_responses=True,
-    username=redis_user,
-    password=redis_pass,
+    username=redis_user if redis_user else None,
+    password=redis_pass if redis_pass else None,
     db=redis_db
 )
 

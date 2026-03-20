@@ -1,3 +1,5 @@
 watchdog
 flask
 tabulate
+redis
+python-dotenv
