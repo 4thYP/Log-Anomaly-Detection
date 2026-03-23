@@ -1,746 +1,1335 @@
+"""
+Production-grade Zookeeper event log parser for Loghub dataset.
+Handles distributed consensus logs from Zookeeper quorum members.
+"""
+
 import re
-from typing import Dict
+from typing import Dict, Optional, Any, Tuple
+from dataclasses import dataclass, asdict
+from datetime import datetime
+
+
 from app.parsers.base_parser import BaseParser
+
+
+@dataclass
+class ParsedZookeeperLogEvent:
+    """Unified schema for all Zookeeper event log entries"""
+
+    # Core identification
+    event_type: str
+    component: str
+    template_id: Optional[str] = None
+    template: str = ""
+    level: str = "INFO"
+
+    # Node/Peer identification
+    local_node_id: Optional[int] = None
+    local_ip: Optional[str] = None
+    local_port: Optional[int] = None
+    remote_ip: Optional[str] = None
+    remote_port: Optional[int] = None
+    peer_id: Optional[int] = None
+
+    # Connection/Worker details
+    worker_type: Optional[str] = None
+    socket_id: Optional[str] = None
+
+    # Leader election
+    election_state: Optional[str] = None
+    notification_timeout: Optional[int] = None
+    proposed_leader: Optional[int] = None
+    proposed_zxid: Optional[str] = None
+    election_round: Optional[int] = None
+
+    # Session management
+    session_id: Optional[str] = None
+    timeout_ms: Optional[int] = None
+
+    # Status & error
+    status: Optional[str] = None
+    error_reason: Optional[str] = None
+
+    # Quorum operations
+    my_id: Optional[int] = None
+    have_quorum: Optional[bool] = None
+
+    # Message/content
+    raw_message: str = ""
+    parsed_successfully: bool = True
+    confidence: float = 1.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary, excluding None values"""
+        return {k: v for k, v in asdict(self).items() if v is not None}
 
 
 class ZookeeperParser(BaseParser):
     """
-    Zookeeper Log Parser
-    Handles various Zookeeper log formats including:
-    - QuorumPeer logs
-    - Leader election logs
-    - Client connection logs
-    - Session management logs
-    - Network communication logs
-    - And more
+    Parser for Zookeeper distributed consensus logs from Loghub dataset.
+
+    Handles:
+    - Connection management (listened/received/broken connections)
+    - Leader election (notifications, state transitions, voting)
+    - Session lifecycle (established, expired, revalidated)
+    - Worker control (SendWorker, RecvWorker, interruption)
+    - Quorum operations (consensus, follower info)
+    - Data operations (snapshots, transaction logs)
+    - Error events (exceptions, timeouts, connection failures)
     """
-    
-    # ===== HEADER PATTERNS =====
-    # Standard Zookeeper log format: YYYY-MM-DD HH:MM:SS,ms - LEVEL [COMPONENT:LINE] - Message
-    header_pattern = re.compile(
-        r"^(?P<date>\d{4}-\d{2}-\d{2})\s+(?P<time>\d{2}:\d{2}:\d{2},\d{3})\s+-\s+(?P<level>\w+)\s+\[(?P<component>[^\]]+)\]\s+-\s+(?P<message>.*)$"
+
+    # ============================================================================
+    # REGEX PATTERNS - Production-grade with extensive coverage
+    # ============================================================================
+
+    # Header pattern: "YYYY-MM-DD HH:MM:SS,mmm - LEVEL [Node:Component@LineNum] - Message"
+    HEADER_PATTERN = re.compile(
+        r"^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2},\d{3})\s+-\s+(\w+)\s+\[(.*?)\]\s+-\s+(.+)$"
     )
-    
-    # Alternative format without line numbers
-    header_pattern_alt = re.compile(
-        r"^(?P<date>\d{4}-\d{2}-\d{2})\s+(?P<time>\d{2}:\d{2}:\d{2},\d{3})\s+-\s+(?P<level>\w+)\s+\[(?P<component>[^:]+)[:\d+]*\]\s+-\s+(?P<message>.*)$"
+
+    # Component extraction: Different formats for different workers
+    # Format 1: QuorumPeer[myid=N]/IP:Port:Component@LineNum
+    # Format 2: /IP:Port:Component@LineNum
+    # Format 3: WorkerType:ID:Component@LineNum
+    COMPONENT_DETAIL_PATTERN = re.compile(
+        r"(?:QuorumPeer\[myid=(\d+)\])?/?(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+):)?(.+?)(?::(\d+))?:([^@]+)@(\d+)"
     )
-    
-    # Simple format for some logs
-    header_pattern_simple = re.compile(
-        r"^(?P<date>\d{4}-\d{2}-\d{2})\s+(?P<time>\d{2}:\d{2}:\d{2},\d{3})\s+-\s+(?P<level>\w+)\s+(?P<component>\S+)\s+-\s+(?P<message>.*)$"
+
+    # IP:Port patterns
+    IP_PORT_PATTERN = re.compile(r"/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)")
+
+    # ============================================================================
+    # CONNECTION EVENTS
+    # ============================================================================
+
+    # E40: Received connection request /10.10.34.11:45307
+    RECEIVED_CONNECTION_PATTERN = re.compile(
+        r"Received connection request\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # ===== COMMON PATTERNS =====
-    ip_pattern = re.compile(r'(?P<ip>\b(?:\d{1,3}\.){3}\d{1,3}\b)')
-    session_pattern = re.compile(r'(?:sessionid|session) (?P<session>0x[0-9a-fA-F]+)')
-    port_pattern = re.compile(r':(?P<port>\d{4,5})')
-    
-    # ===== QUORUM PEER PATTERNS =====
-    
-    # Notification time out
-    notification_timeout = re.compile(
-        r'Notification time out: (?P<timeout>\d+)'
+
+    # E1: GOODBYE
+    GOODBYE_PATTERN = re.compile(r"\*+\s+GOODBYE\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)")
+
+    # E2: Accepted socket connection
+    ACCEPTED_SOCKET_PATTERN = re.compile(
+        r"Accepted socket connection from\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # New election
-    new_election = re.compile(
-        r'New election\. My id =  (?P<my_id>\d+), proposed zxid=(?P<zxid>0x[0-9a-fA-F]+)'
+
+    # E5: Cannot open channel to remote
+    CANNOT_OPEN_CHANNEL_PATTERN = re.compile(
+        r"Cannot open channel to\s+(\d+)\s+at election address\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # FOLLOWING message
-    following = re.compile(
-        r'FOLLOWING(?: - LEADER ELECTION TOOK - (?P<duration>\d+))?'
+
+    # E11: Connection broken for id <id>, my id = <myid>, error =
+    CONNECTION_BROKEN_PATTERN = re.compile(
+        r"Connection broken for id\s+(\d+),\s+my id\s+=\s+(\d+),\s+error\s+="
     )
-    
-    # LOOKING state
-    looking = re.compile(r'LOOKING')
-    
-    # LEADER ELECTION TOOK
-    leader_election_took = re.compile(
-        r'FOLLOWING - LEADER ELECTION TOOK - (?P<duration>\d+)'
+
+    # E9: Closed socket connection for client (no session)
+    CLOSED_SOCKET_NO_SESSION_PATTERN = re.compile(
+        r"Closed socket connection for client\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)\s+\(no session established"
     )
-    
-    # Getting a snapshot from leader
-    getting_snapshot = re.compile(r'Getting a snapshot from leader')
-    
-    # Sending DIFF
-    sending_diff = re.compile(r'Sending DIFF')
-    
-    # Snapshotting
-    snapshotting = re.compile(
-        r'Snapshotting: (?P<zxid>0x[0-9a-fA-F]+) to (?P<path>[^\s]+)'
+
+    # E10: Closed socket connection for client (with session)
+    CLOSED_SOCKET_WITH_SESSION_PATTERN = re.compile(
+        r"Closed socket connection for client\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)\s+which had sessionid\s+(\w+)"
     )
-    
-    # Reading snapshot
-    reading_snapshot = re.compile(
-        r'Reading snapshot (?P<path>[^\s]+)'
+
+    # ============================================================================
+    # LEADER ELECTION
+    # ============================================================================
+
+    # E31: Notification time out: 3200
+    NOTIFICATION_TIMEOUT_PATTERN = re.compile(r"Notification time out:\s+(\d+)")
+
+    # E32-E37: Notification patterns with full state
+    NOTIFICATION_PATTERN = re.compile(
+        r"Notification:\s+(\d+)\s+\(n\.leader\),\s+(\d+)\s+\(n\.zxid\),\s+(\d+)\s+\(n\.round\),\s+(\w+)\s+\(n\.state\),\s+(\d+)\s+\(n\.sid\),\s+(\d+)\s+\(n\.peerEpoch\),\s+(\w+)\s+\(my state\)"
     )
-    
-    # Have quorum of supporters
-    have_quorum = re.compile(
-        r'Have quorum of supporters; starting up and setting last processed zxid: (?P<zxid>0x[0-9a-fA-F]+)'
+
+    # E30: New election. My id = <N>, proposed zxid=<Z>
+    NEW_ELECTION_PATTERN = re.compile(
+        r"New election\.\s+My id\s+=\s+(\d+),\s+proposed zxid=(\d+)"
     )
-    
-    # First is
-    first_is = re.compile(r'First is (?P<value>0x[0-9a-fA-F]+)')
-    
-    # ===== QUORUM CONNECTION MANAGER PATTERNS =====
-    
-    # Received connection request
-    received_connection = re.compile(
-        r'Received connection request /(?P<ip>[\d\.]+):(?P<port>\d+)'
+
+    # State transitions: LOOKING, FOLLOWING, LEADING
+    LOOKING_PATTERN = re.compile(r"\bLOOKING\b")
+    FOLLOWING_PATTERN = re.compile(r"\bFOLLOWING\b")
+    LEADING_PATTERN = re.compile(r"\bLEADING\b")
+
+    # E18: FOLLOWING
+    FOLLOWING_LITERAL_PATTERN = re.compile(r"^FOLLOWING$")
+
+    # E26: LOOKING
+    LOOKING_LITERAL_PATTERN = re.compile(r"^LOOKING$")
+
+    # E19: FOLLOWING - LEADER ELECTION TOOK - <time>
+    LEADER_ELECTION_TOOK_PATTERN = re.compile(
+        r"FOLLOWING\s*-\s*LEADER ELECTION TOOK\s*-\s+(\d+)"
     )
-    
-    # Cannot open channel
-    cannot_open_channel = re.compile(
-        r'Cannot open channel to (?P<peer_id>\d+) at election address /(?P<ip>[\d\.]+):(?P<port>\d+)'
+
+    # ============================================================================
+    # SESSION MANAGEMENT
+    # ============================================================================
+
+    # E13: Established session <sid> with negotiated timeout <ms> for client <ip>:<port>
+    ESTABLISHED_SESSION_PATTERN = re.compile(
+        r"Established session\s+(\w+)\s+with negotiated timeout\s+(\d+)\s+for client\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # Have smaller server identifier
-    smaller_server_id = re.compile(
-        r'Have smaller server identifier, so dropping the connection: \((?P<peer1>\d+), (?P<peer2>\d+)\)'
+
+    # E8: Client attempting to renew session
+    RENEW_SESSION_PATTERN = re.compile(
+        r"Client attempting to renew session\s+(\w+)\s+at\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # My election bind port
-    election_bind_port = re.compile(
-        r'My election bind port: (?P<ip>[^:]+):(?P<port>\d+)'
+
+    # E7: Client attempting to establish new session
+    NEW_SESSION_PATTERN = re.compile(
+        r"Client attempting to establish new session at\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
     )
-    
-    # Send worker leaving thread
-    send_worker_leaving = re.compile(r'Send worker leaving thread')
-    
-    # Interrupted while waiting for message on queue
-    interrupted_waiting = re.compile(r'Interrupted while waiting for message on queue')
-    
-    # Interrupting SendWorker
-    interrupting_send_worker = re.compile(r'Interrupting SendWorker')
-    
-    # Connection broken
-    connection_broken = re.compile(
-        r'Connection broken for id (?P<peer_id>\d+), my id = (?P<my_id>\d+), error ='
+
+    # E15: Expiring session <sid>, timeout of <ms>ms exceeded
+    EXPIRING_SESSION_PATTERN = re.compile(
+        r"Expiring session\s+(\w+),\s+timeout of\s+(\d+)ms exceeded"
     )
-    
-    # ===== LEADER/FLLOWER/LEARNER PATTERNS =====
-    
-    # GOODBYE message
-    goodbye = re.compile(
-        r'\*\*\*\*\*\*\* GOODBYE /(?P<ip>[\d\.]+):(?P<port>\d+) \*\*\*\*\*\*\*'
+
+    # E41: Revalidating client
+    REVALIDATING_CLIENT_PATTERN = re.compile(r"Revalidating client:\s+(\w+)")
+
+    # ============================================================================
+    # WORKER CONTROL
+    # ============================================================================
+
+    # E24: Interrupted while waiting for message on queue
+    INTERRUPTED_WAITING_PATTERN = re.compile(
+        r"Interrupted while waiting for message on queue"
     )
-    
-    # Unexpected exception causing shutdown
-    unexpected_exception = re.compile(
-        r'Unexpected exception causing shutdown while sock still open'
+
+    # E25: Interrupting SendWorker
+    INTERRUPTING_SENDWORKER_PATTERN = re.compile(r"Interrupting SendWorker")
+
+    # E42: Send worker leaving thread
+    SEND_WORKER_LEAVING_PATTERN = re.compile(r"Send worker leaving thread")
+
+    # ============================================================================
+    # QUORUM OPERATIONS
+    # ============================================================================
+
+    # E22: Have quorum of supporters; starting up and setting last processed zxid
+    HAVE_QUORUM_PATTERN = re.compile(
+        r"Have quorum of supporters;\s+starting up and setting last processed zxid:\s+(\d+)"
     )
-    
-    # Follower sid info
-    follower_sid = re.compile(
-        r'Follower sid: (?P<sid>\d+) : info : org\.apache\.zookeeper\.server\.quorum\.QuorumPeer\$QuorumServer@(?P<address>[0-9a-fA-F]+)'
+
+    # E23: Have smaller server identifier, so dropping the connection
+    SMALLER_SERVER_ID_PATTERN = re.compile(
+        r"Have smaller server identifier,\s+so dropping the connection:\s+\((\d+),\s+(\d+)\)"
     )
-    
-    # ===== NIOSERVER CONNECTION PATTERNS =====
-    
-    # Accepted socket connection
-    accepted_connection = re.compile(
-        r'Accepted socket connection from /(?P<ip>[\d\.]+):(?P<port>\d+)'
+
+    # E17: Follower sid: <id> : info : <class>@<addr>
+    FOLLOWER_INFO_PATTERN = re.compile(
+        r"Follower sid:\s+(\d+)\s+:\s+info\s+:\s+org\.apache\.zookeeper\.server\.quorum\.QuorumPeer"
     )
-    
-    # Closed socket connection (with session)
-    closed_connection_with_session = re.compile(
-        r'Closed socket connection for client /(?P<ip>[\d\.]+):(?P<port>\d+) which had sessionid (?P<session>0x[0-9a-fA-F]+)'
+
+    # E20: Getting a snapshot from leader
+    GETTING_SNAPSHOT_PATTERN = re.compile(r"Getting a snapshot from leader")
+
+    # E22 variant: Have quorum
+    QUORUM_ACHIEVED_PATTERN = re.compile(
+        r"Have quorum of supporters"
     )
-    
-    # Closed socket connection (no session)
-    closed_connection_no_session = re.compile(
-        r'Closed socket connection for client /(?P<ip>[\d\.]+):(?P<port>\d+) \(no session established for client\)'
+
+    # ============================================================================
+    # SNAPSHOT/DATA
+    # ============================================================================
+
+    # E39: Reading snapshot
+    READING_SNAPSHOT_PATTERN = re.compile(r"Reading snapshot\s+(\d+)")
+
+    # E46: Snapshotting
+    SNAPSHOTTING_PATTERN = re.compile(r"Snapshotting:\s+(\d+)\s+to\s+(.+)")
+
+    # ============================================================================
+    # ERROR/EXCEPTION
+    # ============================================================================
+
+    # E6: caught end of stream exception
+    END_OF_STREAM_PATTERN = re.compile(r"caught end of stream exception")
+
+    # E14: Exception causing close of session
+    SESSION_EXCEPTION_PATTERN = re.compile(
+        r"Exception causing close of session\s+(\w+)\s+due to (.+)"
     )
-    
-    # caught end of stream exception
-    caught_end_of_stream = re.compile(r'caught end of stream exception')
-    
-    # Exception causing close of session
-    exception_close_session = re.compile(
-        r'Exception causing close of session (?P<session>0x[0-9a-fA-F]+) due to java\.io\.IOException: ZooKeeperServer not running'
+
+    # E49: Unexpected exception causing shutdown
+    UNEXPECTED_EXCEPTION_SHUTDOWN_PATTERN = re.compile(
+        r"Unexpected exception causing shutdown while sock still open"
     )
-    
-    # ===== ZOOKEEPER SERVER PATTERNS =====
-    
-    # Client attempting to establish new session
-    client_new_session = re.compile(
-        r'Client attempting to establish new session at /(?P<ip>[\d\.]+):(?P<port>\d+)'
+
+    # E50: Unexpected Exception
+    UNEXPECTED_EXCEPTION_PATTERN = re.compile(r"Unexpected Exception:")
+
+    # E21: KeeperException
+    KEEPER_EXCEPTION_PATTERN = re.compile(
+        r"Got user-level KeeperException when processing sessionid:(\w+)"
     )
-    
-    # Client attempting to renew session
-    client_renew_session = re.compile(
-        r'Client attempting to renew session (?P<session>0x[0-9a-fA-F]+) at /(?P<ip>[\d\.]+):(?P<port>\d+)'
+
+    # ============================================================================
+    # CONFIGURATION
+    # ============================================================================
+
+    # E3: autopurge.purgeInterval
+    AUTOPURGE_INTERVAL_PATTERN = re.compile(r"autopurge\.purgeInterval set to\s+(\d+)")
+
+    # E4: autopurge.snapRetainCount
+    AUTOPURGE_RETAIN_PATTERN = re.compile(r"autopurge\.snapRetainCount set to\s+(\d+)")
+
+    # E27: maxSessionTimeout
+    MAX_SESSION_TIMEOUT_PATTERN = re.compile(r"maxSessionTimeout set to\s+(\d+)")
+
+    # E28: minSessionTimeout
+    MIN_SESSION_TIMEOUT_PATTERN = re.compile(r"minSessionTimeout set to\s+(\d+)")
+
+    # E48: tickTime
+    TICK_TIME_PATTERN = re.compile(r"tickTime set to\s+(\d+)")
+
+    # ============================================================================
+    # OTHER
+    # ============================================================================
+
+    # E44: Server environment
+    SERVER_ENVIRONMENT_PATTERN = re.compile(r"Server environment:(.+)")
+
+    # E45: shutdown of request processor complete
+    SHUTDOWN_COMPLETE_PATTERN = re.compile(r"shutdown of request processor complete")
+
+    # E47: Starting quorum peer
+    STARTING_QUORUM_PEER_PATTERN = re.compile(r"Starting quorum peer")
+
+    # E29: My election bind port
+    ELECTION_BIND_PORT_PATTERN = re.compile(
+        r"My election bind port:\s+/?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+):(\d+)"
     )
-    
-    # Established session
-    established_session = re.compile(
-        r'Established session (?P<session>0x[0-9a-fA-F]+) with negotiated timeout (?P<timeout>\d+) for client /(?P<ip>[\d\.]+):(?P<port>\d+)'
-    )
-    
-    # Expiring session
-    expiring_session = re.compile(
-        r'Expiring session (?P<session>0x[0-9a-fA-F]+), timeout of (?P<timeout>\d+)ms exceeded'
-    )
-    
-    # Processed session termination
-    session_termination = re.compile(
-        r'Processed session termination for sessionid: (?P<session>0x[0-9a-fA-F]+)'
-    )
-    
-    # Revalidating client
-    revalidating_client = re.compile(
-        r'Revalidating client: (?P<session>0x[0-9a-fA-F]+)'
-    )
-    
-    # Connection request from old client
-    old_client_connection = re.compile(
-        r'Connection request from old client /(?P<ip>[\d\.]+):(?P<port>\d+); will be dropped if server is in r-o mode'
-    )
-    
-    # ===== FAST LEADER ELECTION PATTERNS =====
-    
-    # Notification message
-    notification = re.compile(
-        r'Notification: (?P<leader>\d+) \(n\.leader\), (?P<zxid>0x[0-9a-fA-F]+) \(n\.zxid\), (?P<round>0x[0-9a-fA-F]+) \(n\.round\), (?P<state>\w+) \(n\.state\), (?P<sid>\d+) \(n\.sid\), (?P<epoch>0x[0-9a-fA-F]+) \(n\.peerEPoch\), (?P<my_state>\w+) \(my state\)'
-    )
-    
-    # ===== ENVIRONMENT PATTERNS =====
-    
-    # Server environment
-    server_environment = re.compile(
-        r'Server environment:(?P<env_key>[^=]+)=(?P<env_value>.*)$'
-    )
-    
-    # ===== TIMEOUT/SETTING PATTERNS =====
-    
-    # tickTime set
-    tick_time = re.compile(r'tickTime set to (?P<tick_time>\d+)')
-    
-    # minSessionTimeout set
-    min_session_timeout = re.compile(r'minSessionTimeout set to (?P<timeout>-?\d+)')
-    
-    # maxSessionTimeout set
-    max_session_timeout = re.compile(r'maxSessionTimeout set to (?P<timeout>-?\d+)')
-    
-    # ===== AUTO PURGE PATTERNS =====
-    
-    # autopurge.snapRetainCount set
-    autopurge_snap = re.compile(r'autopurge\.snapRetainCount set to (?P<count>\d+)')
-    
-    # autopurge.purgeInterval set
-    autopurge_interval = re.compile(r'autopurge\.purgeInterval set to (?P<interval>\d+)')
-    
-    # ===== KEEPER EXCEPTION PATTERNS =====
-    
-    # Got user-level KeeperException
-    keeper_exception = re.compile(
-        r'Got user-level KeeperException when processing sessionid:(?P<session>0x[0-9a-fA-F]+) type:create cxid:(?P<cxid>0x[0-9a-fA-F]+) zxid:(?P<zxid>0x[0-9a-fA-F]+) txntype:(?P<txntype>-?\d+) reqpath:(?P<reqpath>[^ ]*) Error Path:(?P<error_path>[^ ]*) Error:KeeperErrorCode = NodeExists for (?P<node_path>[^\s]+)'
-    )
-    
-    # ===== SHUTDOWN PATTERNS =====
-    
-    # shutdown of request processor complete
-    shutdown_complete = re.compile(r'shutdown of request processor complete')
-    
-    # Starting quorum peer
-    starting_quorum_peer = re.compile(r'Starting quorum peer')
-    
-    # ===== HELPER METHODS =====
-    
-    def _extract_component_details(self, component: str) -> Dict:
-        """Extract component name and line number"""
-        result = {"component_name": component, "line_number": None}
-        
-        # Extract line number if present
-        line_match = re.search(r':(\d+)\]', component)
-        if line_match:
-            result["line_number"] = line_match.group(1)
-            result["component_name"] = component[:line_match.start()]
-        
-        return result
-    
-    def parse(self, message: str) -> Dict:
+
+    # ============================================================================
+    # PARSER IMPLEMENTATION
+    # ============================================================================
+
+    def parse(self, log_line: str) -> Dict[str, Any]:
         """
-        Parse a Zookeeper log message and return structured data
+        Parse a single Zookeeper event log line.
+
+        Args:
+            log_line: Raw event log line
+
+        Returns:
+            Dictionary with parsed event in standardized format
         """
-        
-        # Parse header
-        header_match = self.header_pattern.match(message)
-        if not header_match:
-            header_match = self.header_pattern_alt.match(message)
-        if not header_match:
-            header_match = self.header_pattern_simple.match(message)
-        
-        if not header_match:
-            return {
-                "event_type": "unknown",
-                "template_id": None,
-                "raw_message": message[:200]
-            }
-        
-        header = header_match.groupdict()
-        msg = header.get("message", "")
-        level = header.get("level", "INFO")
-        component = header.get("component", "Unknown")
-        date_str = header.get("date")
-        time_str = header.get("time")
-        
-        timestamp = f"{date_str} {time_str}"
-        
-        # Parse component details
-        comp_details = self._extract_component_details(component)
-        
-        result = {
-            "timestamp": timestamp,
-            "level": level,
-            "component": comp_details["component_name"],
-            "line_number": comp_details["line_number"],
-            "message": msg,
+        try:
+            # Parse header
+            header_match = self.HEADER_PATTERN.match(log_line)
+            if not header_match:
+                return self._unknown_log(log_line)
+
+            date_str, time_str, level, node_component, message = header_match.groups()
+
+            # Extract component details
+            node_details = self._parse_node_component(node_component)
+
+            # Route to appropriate parser based on message type
+            if self.RECEIVED_CONNECTION_PATTERN.search(message):
+                return self._parse_received_connection(
+                    message, level, node_details, log_line
+                )
+            elif self.GOODBYE_PATTERN.search(message):
+                return self._parse_goodbye(message, level, node_details, log_line)
+            elif self.ACCEPTED_SOCKET_PATTERN.search(message):
+                return self._parse_accepted_socket(
+                    message, level, node_details, log_line
+                )
+            elif self.CANNOT_OPEN_CHANNEL_PATTERN.search(message):
+                return self._parse_cannot_open_channel(
+                    message, level, node_details, log_line
+                )
+            elif self.CONNECTION_BROKEN_PATTERN.search(message):
+                return self._parse_connection_broken(
+                    message, level, node_details, log_line
+                )
+            elif self.CLOSED_SOCKET_WITH_SESSION_PATTERN.search(message):
+                return self._parse_closed_socket_with_session(
+                    message, level, node_details, log_line
+                )
+            elif self.CLOSED_SOCKET_NO_SESSION_PATTERN.search(message):
+                return self._parse_closed_socket_no_session(
+                    message, level, node_details, log_line
+                )
+            elif self.NOTIFICATION_PATTERN.search(message):
+                return self._parse_notification(message, level, node_details, log_line)
+            elif self.NOTIFICATION_TIMEOUT_PATTERN.search(message):
+                return self._parse_notification_timeout(
+                    message, level, node_details, log_line
+                )
+            elif self.NEW_ELECTION_PATTERN.search(message):
+                return self._parse_new_election(message, level, node_details, log_line)
+            elif self.LEADER_ELECTION_TOOK_PATTERN.search(message):
+                return self._parse_leader_election_took(
+                    message, level, node_details, log_line
+                )
+            elif self.FOLLOWING_LITERAL_PATTERN.search(message):
+                return self._parse_following(message, level, node_details, log_line)
+            elif self.LOOKING_LITERAL_PATTERN.search(message):
+                return self._parse_looking(message, level, node_details, log_line)
+            elif self.ESTABLISHED_SESSION_PATTERN.search(message):
+                return self._parse_established_session(
+                    message, level, node_details, log_line
+                )
+            elif self.RENEW_SESSION_PATTERN.search(message):
+                return self._parse_renew_session(
+                    message, level, node_details, log_line
+                )
+            elif self.NEW_SESSION_PATTERN.search(message):
+                return self._parse_new_session(message, level, node_details, log_line)
+            elif self.EXPIRING_SESSION_PATTERN.search(message):
+                return self._parse_expiring_session(
+                    message, level, node_details, log_line
+                )
+            elif self.REVALIDATING_CLIENT_PATTERN.search(message):
+                return self._parse_revalidating_client(
+                    message, level, node_details, log_line
+                )
+            elif self.INTERRUPTED_WAITING_PATTERN.search(message):
+                return self._parse_interrupted_waiting(
+                    message, level, node_details, log_line
+                )
+            elif self.INTERRUPTING_SENDWORKER_PATTERN.search(message):
+                return self._parse_interrupting_sendworker(
+                    message, level, node_details, log_line
+                )
+            elif self.SEND_WORKER_LEAVING_PATTERN.search(message):
+                return self._parse_send_worker_leaving(
+                    message, level, node_details, log_line
+                )
+            elif self.HAVE_QUORUM_PATTERN.search(message):
+                return self._parse_have_quorum(message, level, node_details, log_line)
+            elif self.SMALLER_SERVER_ID_PATTERN.search(message):
+                return self._parse_smaller_server_id(
+                    message, level, node_details, log_line
+                )
+            elif self.FOLLOWER_INFO_PATTERN.search(message):
+                return self._parse_follower_info(message, level, node_details, log_line)
+            elif self.GETTING_SNAPSHOT_PATTERN.search(message):
+                return self._parse_getting_snapshot(
+                    message, level, node_details, log_line
+                )
+            elif self.READING_SNAPSHOT_PATTERN.search(message):
+                return self._parse_reading_snapshot(
+                    message, level, node_details, log_line
+                )
+            elif self.SNAPSHOTTING_PATTERN.search(message):
+                return self._parse_snapshotting(
+                    message, level, node_details, log_line
+                )
+            elif self.END_OF_STREAM_PATTERN.search(message):
+                return self._parse_end_of_stream(
+                    message, level, node_details, log_line
+                )
+            elif self.SESSION_EXCEPTION_PATTERN.search(message):
+                return self._parse_session_exception(
+                    message, level, node_details, log_line
+                )
+            elif self.UNEXPECTED_EXCEPTION_SHUTDOWN_PATTERN.search(message):
+                return self._parse_unexpected_exception_shutdown(
+                    message, level, node_details, log_line
+                )
+            elif self.UNEXPECTED_EXCEPTION_PATTERN.search(message):
+                return self._parse_unexpected_exception(
+                    message, level, node_details, log_line
+                )
+            elif self.KEEPER_EXCEPTION_PATTERN.search(message):
+                return self._parse_keeper_exception(
+                    message, level, node_details, log_line
+                )
+            elif self.AUTOPURGE_INTERVAL_PATTERN.search(message):
+                return self._parse_config_param(
+                    message, level, node_details, log_line, "autopurge_interval", "E3"
+                )
+            elif self.AUTOPURGE_RETAIN_PATTERN.search(message):
+                return self._parse_config_param(
+                    message, level, node_details, log_line, "autopurge_retain", "E4"
+                )
+            elif self.MAX_SESSION_TIMEOUT_PATTERN.search(message):
+                return self._parse_config_param(
+                    message, level, node_details, log_line, "max_session_timeout", "E27"
+                )
+            elif self.MIN_SESSION_TIMEOUT_PATTERN.search(message):
+                return self._parse_config_param(
+                    message, level, node_details, log_line, "min_session_timeout", "E28"
+                )
+            elif self.TICK_TIME_PATTERN.search(message):
+                return self._parse_config_param(
+                    message, level, node_details, log_line, "tick_time", "E48"
+                )
+            elif self.SERVER_ENVIRONMENT_PATTERN.search(message):
+                return self._parse_server_environment(
+                    message, level, node_details, log_line
+                )
+            elif self.SHUTDOWN_COMPLETE_PATTERN.search(message):
+                return self._parse_shutdown_complete(
+                    message, level, node_details, log_line
+                )
+            elif self.STARTING_QUORUM_PEER_PATTERN.search(message):
+                return self._parse_starting_quorum_peer(
+                    message, level, node_details, log_line
+                )
+            elif self.ELECTION_BIND_PORT_PATTERN.search(message):
+                return self._parse_election_bind_port(
+                    message, level, node_details, log_line
+                )
+            else:
+                # Generic system info
+                return self._parse_generic(message, level, node_details, log_line)
+
+        except Exception as e:
+            return self._unknown_log(log_line, str(e))
+
+    # ============================================================================
+    # COMPONENT PARSING
+    # ============================================================================
+
+    def _parse_node_component(self, node_component: str) -> Dict[str, Any]:
+        """Extract node, component, and worker details from component field"""
+        details = {
+            "local_node_id": None,
+            "local_ip": None,
+            "local_port": None,
+            "component": "",
+            "worker_type": None,
+            "socket_id": None,
+            "line_num": None,
         }
-        
-        # ===== QUORUM PEER EVENTS =====
-        
-        # Notification time out
-        if "Notification time out:" in msg:
-            match = self.notification_timeout.search(msg)
+
+        # Try format: QuorumPeer[myid=1]/0:0:0:0:0:0:0:2181:FastLeaderElection@774
+        if "QuorumPeer" in node_component and "[myid=" in node_component:
+            match = re.search(r"\[myid=(\d+)\]", node_component)
             if match:
-                result["event_type"] = "quorum_notification_timeout"
-                result["template_id"] = "E31"
-                result["timeout"] = match.group("timeout")
-                return result
-        
-        # New election
-        if "New election" in msg:
-            match = self.new_election.search(msg)
+                details["local_node_id"] = int(match.group(1))
+            # Extract component name
+            match = re.search(r":(\w+)@(\d+)", node_component)
             if match:
-                result["event_type"] = "quorum_new_election"
-                result["template_id"] = "E30"
-                result["my_id"] = match.group("my_id")
-                result["zxid"] = match.group("zxid")
-                return result
-        
-        # FOLLOWING
-        if "FOLLOWING" in msg and "LEADER ELECTION TOOK" not in msg:
-            match = self.following.search(msg)
+                details["component"] = match.group(1)
+                details["line_num"] = int(match.group(2))
+
+        # Try format: /10.10.34.11:3888:QuorumCnxManager$Listener@493
+        elif node_component.startswith("/"):
+            match = re.match(
+                r"/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+):([^@]+)@(\d+)",
+                node_component,
+            )
             if match:
-                result["event_type"] = "quorum_following"
-                result["template_id"] = "E18"
-                if match.group("duration"):
-                    result["duration"] = match.group("duration")
-                return result
-        
-        # FOLLOWING with election took
-        if "FOLLOWING - LEADER ELECTION TOOK" in msg:
-            match = self.leader_election_took.search(msg)
+                details["local_ip"] = match.group(1)
+                details["local_port"] = int(match.group(2))
+                details["component"] = match.group(3)
+                details["line_num"] = int(match.group(4))
+
+        # Try format: SendWorker:188978561024:QuorumCnxManager$SendWorker@688
+        elif ":" in node_component and "@" in node_component:
+            parts = node_component.split(":")
+            if len(parts) >= 2:
+                details["worker_type"] = parts[0]
+                details["socket_id"] = parts[1]
+                if len(parts) >= 3:
+                    match = re.search(r"([^@]+)@(\d+)", ":".join(parts[2:]))
+                    if match:
+                        details["component"] = match.group(1)
+                        details["line_num"] = int(match.group(2))
+
+        # Default: extract component from string
+        if not details["component"]:
+            match = re.search(r"([^\[@:]+)@", node_component)
             if match:
-                result["event_type"] = "quorum_following_election"
-                result["template_id"] = "E19"
-                result["duration"] = match.group("duration")
-                return result
-        
-        # LOOKING
-        if "LOOKING" in msg and "Notification" not in msg:
-            match = self.looking.search(msg)
-            if match:
-                result["event_type"] = "quorum_looking"
-                result["template_id"] = "E26"
-                return result
-        
-        # Getting a snapshot from leader
-        if "Getting a snapshot from leader" in msg:
-            result["event_type"] = "quorum_getting_snapshot"
-            result["template_id"] = "E20"
-            return result
-        
-        # Sending DIFF
-        if "Sending DIFF" in msg:
-            result["event_type"] = "quorum_sending_diff"
-            result["template_id"] = "E43"
-            return result
-        
-        # Snapshotting
-        if "Snapshotting:" in msg:
-            match = self.snapshotting.search(msg)
-            if match:
-                result["event_type"] = "quorum_snapshotting"
-                result["template_id"] = "E46"
-                result["zxid"] = match.group("zxid")
-                result["snapshot_path"] = match.group("path")
-                return result
-        
-        # Reading snapshot
-        if "Reading snapshot" in msg:
-            match = self.reading_snapshot.search(msg)
-            if match:
-                result["event_type"] = "quorum_reading_snapshot"
-                result["template_id"] = "E39"
-                result["snapshot_path"] = match.group("path")
-                return result
-        
-        # Have quorum of supporters
-        if "Have quorum of supporters" in msg:
-            match = self.have_quorum.search(msg)
-            if match:
-                result["event_type"] = "quorum_have_supporters"
-                result["template_id"] = "E22"
-                result["zxid"] = match.group("zxid")
-                return result
-        
-        # First is
-        if "First is" in msg:
-            match = self.first_is.search(msg)
-            if match:
-                result["event_type"] = "quorum_first_is"
-                result["template_id"] = "E16"
-                result["value"] = match.group("value")
-                return result
-        
-        # ===== QUORUM CONNECTION MANAGER EVENTS =====
-        
-        # Received connection request
-        if "Received connection request" in msg:
-            match = self.received_connection.search(msg)
-            if match:
-                result["event_type"] = "quorum_received_connection"
-                result["template_id"] = "E40"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Cannot open channel
-        if "Cannot open channel" in msg:
-            match = self.cannot_open_channel.search(msg)
-            if match:
-                result["event_type"] = "quorum_cannot_open_channel"
-                result["template_id"] = "E5"
-                result["peer_id"] = match.group("peer_id")
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Have smaller server identifier
-        if "Have smaller server identifier" in msg:
-            match = self.smaller_server_id.search(msg)
-            if match:
-                result["event_type"] = "quorum_smaller_server_id"
-                result["template_id"] = "E23"
-                result["peer1"] = match.group("peer1")
-                result["peer2"] = match.group("peer2")
-                return result
-        
-        # My election bind port
-        if "My election bind port" in msg:
-            match = self.election_bind_port.search(msg)
-            if match:
-                result["event_type"] = "quorum_election_bind_port"
-                result["template_id"] = "E29"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Send worker leaving thread
-        if "Send worker leaving thread" in msg:
-            result["event_type"] = "quorum_send_worker_leaving"
-            result["template_id"] = "E42"
-            return result
-        
-        # Interrupted while waiting for message on queue
-        if "Interrupted while waiting for message on queue" in msg:
-            result["event_type"] = "quorum_interrupted_waiting"
-            result["template_id"] = "E24"
-            return result
-        
-        # Interrupting SendWorker
-        if "Interrupting SendWorker" in msg:
-            result["event_type"] = "quorum_interrupting_send_worker"
-            result["template_id"] = "E25"
-            return result
-        
-        # Connection broken
-        if "Connection broken for id" in msg:
-            match = self.connection_broken.search(msg)
-            if match:
-                result["event_type"] = "quorum_connection_broken"
-                result["template_id"] = "E11"
-                result["peer_id"] = match.group("peer_id")
-                result["my_id"] = match.group("my_id")
-                return result
-        
-        # ===== LEADER/FOLLOWER/LEARNER EVENTS =====
-        
-        # GOODBYE
-        if "GOODBYE" in msg:
-            match = self.goodbye.search(msg)
-            if match:
-                result["event_type"] = "learner_goodbye"
-                result["template_id"] = "E1"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Unexpected exception causing shutdown
-        if "Unexpected exception causing shutdown" in msg:
-            result["event_type"] = "learner_unexpected_exception"
-            result["template_id"] = "E49"
-            return result
-        
-        # Follower sid
-        if "Follower sid:" in msg:
-            match = self.follower_sid.search(msg)
-            if match:
-                result["event_type"] = "learner_follower_sid"
-                result["template_id"] = "E17"
-                result["sid"] = match.group("sid")
-                result["address"] = match.group("address")
-                return result
-        
-        # ===== NIOSERVER CONNECTION EVENTS =====
-        
-        # Accepted socket connection
-        if "Accepted socket connection" in msg:
-            match = self.accepted_connection.search(msg)
-            if match:
-                result["event_type"] = "nioserver_accepted_connection"
-                result["template_id"] = "E2"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Closed socket connection with session
-        if "Closed socket connection for client" in msg and "which had sessionid" in msg:
-            match = self.closed_connection_with_session.search(msg)
-            if match:
-                result["event_type"] = "nioserver_closed_connection_session"
-                result["template_id"] = "E10"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                result["session"] = match.group("session")
-                return result
-        
-        # Closed socket connection no session
-        if "Closed socket connection for client" in msg and "no session established" in msg:
-            match = self.closed_connection_no_session.search(msg)
-            if match:
-                result["event_type"] = "nioserver_closed_connection_no_session"
-                result["template_id"] = "E9"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # caught end of stream exception
-        if "caught end of stream exception" in msg:
-            result["event_type"] = "nioserver_end_of_stream"
-            result["template_id"] = "E6"
-            return result
-        
-        # Exception causing close of session
-        if "Exception causing close of session" in msg:
-            match = self.exception_close_session.search(msg)
-            if match:
-                result["event_type"] = "nioserver_exception_close"
-                result["template_id"] = "E14"
-                result["session"] = match.group("session")
-                return result
-        
-        # ===== ZOOKEEPER SERVER EVENTS =====
-        
-        # Client attempting to establish new session
-        if "Client attempting to establish new session" in msg:
-            match = self.client_new_session.search(msg)
-            if match:
-                result["event_type"] = "zkserver_new_session_attempt"
-                result["template_id"] = "E7"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Client attempting to renew session
-        if "Client attempting to renew session" in msg:
-            match = self.client_renew_session.search(msg)
-            if match:
-                result["event_type"] = "zkserver_renew_session_attempt"
-                result["template_id"] = "E8"
-                result["session"] = match.group("session")
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Established session
-        if "Established session" in msg:
-            match = self.established_session.search(msg)
-            if match:
-                result["event_type"] = "zkserver_established_session"
-                result["template_id"] = "E13"
-                result["session"] = match.group("session")
-                result["timeout"] = match.group("timeout")
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # Expiring session
-        if "Expiring session" in msg:
-            match = self.expiring_session.search(msg)
-            if match:
-                result["event_type"] = "zkserver_expiring_session"
-                result["template_id"] = "E15"
-                result["session"] = match.group("session")
-                result["timeout"] = match.group("timeout")
-                return result
-        
-        # Processed session termination
-        if "Processed session termination" in msg:
-            match = self.session_termination.search(msg)
-            if match:
-                result["event_type"] = "zkserver_session_termination"
-                result["template_id"] = "E38"
-                result["session"] = match.group("session")
-                return result
-        
-        # Revalidating client
-        if "Revalidating client:" in msg:
-            match = self.revalidating_client.search(msg)
-            if match:
-                result["event_type"] = "zkserver_revalidating_client"
-                result["template_id"] = "E41"
-                result["session"] = match.group("session")
-                return result
-        
-        # Connection request from old client
-        if "Connection request from old client" in msg:
-            match = self.old_client_connection.search(msg)
-            if match:
-                result["event_type"] = "zkserver_old_client_connection"
-                result["template_id"] = "E12"
-                result["ip"] = match.group("ip")
-                result["port"] = match.group("port")
-                return result
-        
-        # ===== FAST LEADER ELECTION EVENTS =====
-        
-        # Notification
-        if "Notification:" in msg:
-            match = self.notification.search(msg)
-            if match:
-                result["event_type"] = "fle_notification"
-                result["leader"] = match.group("leader")
-                result["zxid"] = match.group("zxid")
-                result["round"] = match.group("round")
-                result["n_state"] = match.group("state")
-                result["sid"] = match.group("sid")
-                result["epoch"] = match.group("epoch")
-                result["my_state"] = match.group("my_state")
-                
-                # Determine template ID based on states
-                if match.group("state") == "LEADING" and match.group("my_state") == "LOOKING":
-                    result["template_id"] = "E34"
-                elif match.group("state") == "LOOKING" and match.group("my_state") == "LEADING":
-                    result["template_id"] = "E36"
-                elif match.group("state") == "LOOKING" and match.group("my_state") == "LOOKING":
-                    result["template_id"] = "E37"
-                elif match.group("state") == "LOOKING" and match.group("my_state") == "FOLLOWING":
-                    result["template_id"] = "E35"
-                elif match.group("state") == "FOLLOWING" and match.group("my_state") == "LEADING":
-                    result["template_id"] = "E33"
-                elif match.group("state") == "FOLLOWING" and match.group("my_state") == "FOLLOWING":
-                    result["template_id"] = "E32"
-                else:
-                    result["template_id"] = "E32"
-                return result
-        
-        # ===== ENVIRONMENT EVENTS =====
-        
-        if "Server environment:" in msg:
-            match = self.server_environment.search(msg)
-            if match:
-                result["event_type"] = "environment_info"
-                result["template_id"] = "E44"
-                result["env_key"] = match.group("env_key").strip()
-                result["env_value"] = match.group("env_value").strip()
-                return result
-        
-        # ===== TIMEOUT/SETTING EVENTS =====
-        
-        if "tickTime set to" in msg:
-            match = self.tick_time.search(msg)
-            if match:
-                result["event_type"] = "config_tick_time"
-                result["template_id"] = "E48"
-                result["tick_time"] = match.group("tick_time")
-                return result
-        
-        if "minSessionTimeout set to" in msg:
-            match = self.min_session_timeout.search(msg)
-            if match:
-                result["event_type"] = "config_min_session_timeout"
-                result["template_id"] = "E28"
-                result["timeout"] = match.group("timeout")
-                return result
-        
-        if "maxSessionTimeout set to" in msg:
-            match = self.max_session_timeout.search(msg)
-            if match:
-                result["event_type"] = "config_max_session_timeout"
-                result["template_id"] = "E27"
-                result["timeout"] = match.group("timeout")
-                return result
-        
-        # ===== AUTO PURGE EVENTS =====
-        
-        if "autopurge.snapRetainCount set to" in msg:
-            match = self.autopurge_snap.search(msg)
-            if match:
-                result["event_type"] = "config_autopurge_snap"
-                result["template_id"] = "E4"
-                result["snap_retain_count"] = match.group("count")
-                return result
-        
-        if "autopurge.purgeInterval set to" in msg:
-            match = self.autopurge_interval.search(msg)
-            if match:
-                result["event_type"] = "config_autopurge_interval"
-                result["template_id"] = "E3"
-                result["purge_interval"] = match.group("interval")
-                return result
-        
-        # ===== KEEPER EXCEPTION EVENTS =====
-        
-        if "Got user-level KeeperException" in msg:
-            match = self.keeper_exception.search(msg)
-            if match:
-                result["event_type"] = "keeper_exception"
-                result["template_id"] = "E21"
-                result["session"] = match.group("session")
-                result["error_path"] = match.group("error_path")
-                result["node_path"] = match.group("node_path")
-                return result
-        
-        # ===== SHUTDOWN EVENTS =====
-        
-        if "shutdown of request processor complete" in msg:
-            result["event_type"] = "shutdown_complete"
-            result["template_id"] = "E45"
-            return result
-        
-        if "Starting quorum peer" in msg:
-            result["event_type"] = "starting_quorum_peer"
-            result["template_id"] = "E47"
-            return result
-        
-        # ===== DEFAULT =====
-        result["event_type"] = "other"
-        result["template_id"] = None
-        
-        # Try to extract session ID if present
-        session_match = self.session_pattern.search(msg)
-        if session_match:
-            result["session"] = session_match.group("session")
-        
-        # Try to extract IP if present
-        ip_match = self.ip_pattern.search(msg)
-        if ip_match:
-            result["ip"] = ip_match.group("ip")
-        
-        return result
+                details["component"] = match.group(1)
+
+        return details
+
+    # ============================================================================
+    # EVENT PARSERS
+    # ============================================================================
+
+    def _parse_received_connection(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E40: Received connection request"""
+        match = self.RECEIVED_CONNECTION_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="connection_received",
+                component=node_details["component"],
+                template_id="E40",
+                template="Received connection request /<*>:<*>",
+                level=level,
+                local_ip=node_details["local_ip"],
+                local_port=node_details["local_port"],
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_goodbye(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E1: GOODBYE"""
+        match = self.GOODBYE_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="connection_goodbye",
+                component=node_details["component"],
+                template_id="E1",
+                template="******* GOODBYE /<*>:<*> ********",
+                level=level,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_accepted_socket(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E2: Accepted socket connection"""
+        match = self.ACCEPTED_SOCKET_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="connection_accepted",
+                component=node_details["component"],
+                template_id="E2",
+                template="Accepted socket connection from /<*>:<*>",
+                level=level,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_cannot_open_channel(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E5: Cannot open channel to remote peer"""
+        match = self.CANNOT_OPEN_CHANNEL_PATTERN.search(message)
+        if match:
+            peer_id, remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="channel_error",
+                component=node_details["component"],
+                template_id="E5",
+                template="Cannot open channel to <*> at election address /<*>:<*>",
+                level=level,
+                peer_id=int(peer_id),
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="failure",
+                error_reason="Cannot open channel",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_connection_broken(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E11: Connection broken for id <id>, my id = <myid>"""
+        match = self.CONNECTION_BROKEN_PATTERN.search(message)
+        if match:
+            peer_id, my_id = match.groups()
+            return self._build_event(
+                event_type="connection_broken",
+                component=node_details["component"],
+                template_id="E11",
+                template="Connection broken for id <*>, my id = <*>, error =",
+                level=level,
+                peer_id=int(peer_id),
+                my_id=int(my_id),
+                status="failure",
+                error_reason="Connection broken",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_closed_socket_with_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E10: Closed socket connection for client (with session)"""
+        match = self.CLOSED_SOCKET_WITH_SESSION_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port, session_id = match.groups()
+            return self._build_event(
+                event_type="session_closed",
+                component=node_details["component"],
+                template_id="E10",
+                template="Closed socket connection for client /<*>:<*> which had sessionid <*>",
+                level=level,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                session_id=session_id,
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_closed_socket_no_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E9: Closed socket connection for client (no session)"""
+        match = self.CLOSED_SOCKET_NO_SESSION_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="session_closed",
+                component=node_details["component"],
+                template_id="E9",
+                template="Closed socket connection for client /<*>:<*> (no session established for client)",
+                level=level,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_notification(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E32-E37: Notification with full election state"""
+        match = self.NOTIFICATION_PATTERN.search(message)
+        if match:
+            (
+                leader,
+                zxid,
+                round_,
+                state,
+                sid,
+                epoch,
+                my_state,
+            ) = match.groups()
+            return self._build_event(
+                event_type="election_notification",
+                component=node_details["component"],
+                template_id="E32-E37",
+                template="Notification: <*> (n.leader), <*> (n.zxid), <*> (n.round), <*> (n.state), <*> (n.sid), <*> (n.peerEpoch), <*> (my state)",
+                level=level,
+                proposed_leader=int(leader),
+                proposed_zxid=zxid,
+                election_round=int(round_),
+                election_state=my_state,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_notification_timeout(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E31: Notification time out"""
+        match = self.NOTIFICATION_TIMEOUT_PATTERN.search(message)
+        if match:
+            timeout = int(match.group(1))
+            return self._build_event(
+                event_type="election_notification_timeout",
+                component=node_details["component"],
+                template_id="E31",
+                template="Notification time out: <*>",
+                level=level,
+                notification_timeout=timeout,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_new_election(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E30: New election"""
+        match = self.NEW_ELECTION_PATTERN.search(message)
+        if match:
+            my_id, proposed_zxid = match.groups()
+            return self._build_event(
+                event_type="election_start",
+                component=node_details["component"],
+                template_id="E30",
+                template="New election. My id =  <*>, proposed zxid=<*>",
+                level=level,
+                my_id=int(my_id),
+                proposed_zxid=proposed_zxid,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_leader_election_took(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E19: Leader election took <time>"""
+        match = self.LEADER_ELECTION_TOOK_PATTERN.search(message)
+        if match:
+            time_ms = int(match.group(1))
+            return self._build_event(
+                event_type="election_took",
+                component=node_details["component"],
+                template_id="E19",
+                template="FOLLOWING - LEADER ELECTION TOOK - <*>",
+                level=level,
+                timeout_ms=time_ms,
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_following(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E18: FOLLOWING state"""
+        return self._build_event(
+            event_type="election_state_change",
+            component=node_details["component"],
+            template_id="E18",
+            template="FOLLOWING",
+            level=level,
+            election_state="FOLLOWING",
+            status="success",
+            raw_message=message,
+        )
+
+    def _parse_looking(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E26: LOOKING state"""
+        return self._build_event(
+            event_type="election_state_change",
+            component=node_details["component"],
+            template_id="E26",
+            template="LOOKING",
+            level=level,
+            election_state="LOOKING",
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_established_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E13: Established session"""
+        match = self.ESTABLISHED_SESSION_PATTERN.search(message)
+        if match:
+            session_id, timeout, remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="session_established",
+                component=node_details["component"],
+                template_id="E13",
+                template="Established session <*> with negotiated timeout <*> for client /<*>:<*>",
+                level=level,
+                session_id=session_id,
+                timeout_ms=int(timeout),
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_renew_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E8: Client attempting to renew session"""
+        match = self.RENEW_SESSION_PATTERN.search(message)
+        if match:
+            session_id, remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="session_renew",
+                component=node_details["component"],
+                template_id="E8",
+                template="Client attempting to renew session <*> at /<*>:<*>",
+                level=level,
+                session_id=session_id,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_new_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E7: Client attempting to establish new session"""
+        match = self.NEW_SESSION_PATTERN.search(message)
+        if match:
+            remote_ip, remote_port = match.groups()
+            return self._build_event(
+                event_type="session_new",
+                component=node_details["component"],
+                template_id="E7",
+                template="Client attempting to establish new session at /<*>:<*>",
+                level=level,
+                remote_ip=remote_ip,
+                remote_port=int(remote_port),
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_expiring_session(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E15: Expiring session"""
+        match = self.EXPIRING_SESSION_PATTERN.search(message)
+        if match:
+            session_id, timeout_ms = match.groups()
+            return self._build_event(
+                event_type="session_expired",
+                component=node_details["component"],
+                template_id="E15",
+                template="Expiring session <*>, timeout of <*>ms exceeded",
+                level=level,
+                session_id=session_id,
+                timeout_ms=int(timeout_ms),
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_revalidating_client(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E41: Revalidating client"""
+        match = self.REVALIDATING_CLIENT_PATTERN.search(message)
+        if match:
+            session_id = match.group(1)
+            return self._build_event(
+                event_type="session_revalidation",
+                component=node_details["component"],
+                template_id="E41",
+                template="Revalidating client: <*>",
+                level=level,
+                session_id=session_id,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_interrupted_waiting(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E24: Interrupted while waiting for message on queue"""
+        return self._build_event(
+            event_type="worker_interrupted",
+            component=node_details["component"],
+            template_id="E24",
+            template="Interrupted while waiting for message on queue",
+            level=level,
+            worker_type=node_details["worker_type"],
+            socket_id=node_details["socket_id"],
+            status="warning",
+            raw_message=message,
+        )
+
+    def _parse_interrupting_sendworker(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E25: Interrupting SendWorker"""
+        return self._build_event(
+            event_type="worker_interrupt_send",
+            component=node_details["component"],
+            template_id="E25",
+            template="Interrupting SendWorker",
+            level=level,
+            worker_type=node_details["worker_type"],
+            socket_id=node_details["socket_id"],
+            status="warning",
+            raw_message=message,
+        )
+
+    def _parse_send_worker_leaving(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E42: Send worker leaving thread"""
+        return self._build_event(
+            event_type="worker_send_leaving",
+            component=node_details["component"],
+            template_id="E42",
+            template="Send worker leaving thread",
+            level=level,
+            worker_type="SendWorker",
+            socket_id=node_details["socket_id"],
+            status="warning",
+            raw_message=message,
+        )
+
+    def _parse_have_quorum(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E22: Have quorum of supporters"""
+        match = self.HAVE_QUORUM_PATTERN.search(message)
+        if match:
+            zxid = match.group(1)
+            return self._build_event(
+                event_type="quorum_achieved",
+                component=node_details["component"],
+                template_id="E22",
+                template="Have quorum of supporters; starting up and setting last processed zxid: <*>",
+                level=level,
+                proposed_zxid=zxid,
+                have_quorum=True,
+                status="success",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_smaller_server_id(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E23: Have smaller server identifier"""
+        match = self.SMALLER_SERVER_ID_PATTERN.search(message)
+        if match:
+            id1, id2 = match.groups()
+            return self._build_event(
+                event_type="connection_dropped",
+                component=node_details["component"],
+                template_id="E23",
+                template="Have smaller server identifier, so dropping the connection: (<*>, <*>)",
+                level=level,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_follower_info(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E17: Follower sid info"""
+        match = self.FOLLOWER_INFO_PATTERN.search(message)
+        if match:
+            sid = int(match.group(1))
+            return self._build_event(
+                event_type="follower_info",
+                component=node_details["component"],
+                template_id="E17",
+                template="Follower sid: <*> : info : org.apache.zookeeper.server.quorum.QuorumPeer$QuorumServer@<*>",
+                level=level,
+                peer_id=sid,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_getting_snapshot(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E20: Getting snapshot from leader"""
+        return self._build_event(
+            event_type="getting_snapshot",
+            component=node_details["component"],
+            template_id="E20",
+            template="Getting a snapshot from leader",
+            level=level,
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_reading_snapshot(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E39: Reading snapshot"""
+        match = self.READING_SNAPSHOT_PATTERN.search(message)
+        if match:
+            snapshot_id = match.group(1)
+            return self._build_event(
+                event_type="snapshot_reading",
+                component=node_details["component"],
+                template_id="E39",
+                template="Reading snapshot <*>",
+                level=level,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_snapshotting(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E46: Snapshotting"""
+        match = self.SNAPSHOTTING_PATTERN.search(message)
+        if match:
+            from_val, to_val = match.groups()
+            return self._build_event(
+                event_type="snapshot_writing",
+                component=node_details["component"],
+                template_id="E46",
+                template="Snapshotting: <*> to <*>",
+                level=level,
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_end_of_stream(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E6: End of stream exception"""
+        return self._build_event(
+            event_type="end_of_stream",
+            component=node_details["component"],
+            template_id="E6",
+            template="caught end of stream exception",
+            level=level,
+            status="failure",
+            error_reason="End of stream",
+            raw_message=message,
+        )
+
+    def _parse_session_exception(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E14: Session exception"""
+        match = self.SESSION_EXCEPTION_PATTERN.search(message)
+        if match:
+            session_id, error = match.groups()
+            return self._build_event(
+                event_type="server_not_running",
+                component=node_details["component"],
+                template_id="E14",
+                template="Exception causing close of session <*> due to java.io.IOException: <*>",
+                level=level,
+                session_id=session_id,
+                status="failure",
+                error_reason=error,
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_unexpected_exception_shutdown(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E49: Unexpected exception shutdown"""
+        return self._build_event(
+            event_type="exception_error",
+            component=node_details["component"],
+            template_id="E49",
+            template="Unexpected exception causing shutdown while sock still open",
+            level=level,
+            status="failure",
+            error_reason="Unexpected exception",
+            raw_message=message,
+        )
+
+    def _parse_unexpected_exception(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E50: Unexpected Exception"""
+        return self._build_event(
+            event_type="exception_error",
+            component=node_details["component"],
+            template_id="E50",
+            template="Unexpected Exception:",
+            level=level,
+            status="failure",
+            error_reason="Unexpected exception",
+            raw_message=message,
+        )
+
+    def _parse_keeper_exception(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E21: KeeperException"""
+        match = self.KEEPER_EXCEPTION_PATTERN.search(message)
+        if match:
+            session_id = match.group(1)
+            return self._build_event(
+                event_type="keeper_exception",
+                component=node_details["component"],
+                template_id="E21",
+                template="Got user-level KeeperException when processing sessionid:<*> type:<*> cxid:<*> zxid:<*> txntype:<*> reqpath:<*> Error Path:<*> Error:<*>",
+                level=level,
+                session_id=session_id,
+                status="failure",
+                error_reason="KeeperException",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_config_param(
+        self,
+        message: str,
+        level: str,
+        node_details: Dict,
+        raw_log: str,
+        param_name: str,
+        template_id: str,
+    ) -> Dict[str, Any]:
+        """Configuration parameter set"""
+        return self._build_event(
+            event_type="config_set",
+            component=node_details["component"],
+            template_id=template_id,
+            template=f"{param_name} set to <*>",
+            level=level,
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_server_environment(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E44: Server environment"""
+        return self._build_event(
+            event_type="server_environment",
+            component=node_details["component"],
+            template_id="E44",
+            template="Server environment:<*>",
+            level=level,
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_shutdown_complete(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E45: Shutdown complete"""
+        return self._build_event(
+            event_type="shutdown_complete",
+            component=node_details["component"],
+            template_id="E45",
+            template="shutdown of request processor complete",
+            level=level,
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_starting_quorum_peer(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E47: Starting quorum peer"""
+        return self._build_event(
+            event_type="service_start",
+            component=node_details["component"],
+            template_id="E47",
+            template="Starting quorum peer",
+            level=level,
+            status="info",
+            raw_message=message,
+        )
+
+    def _parse_election_bind_port(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """E29: Election bind port"""
+        match = self.ELECTION_BIND_PORT_PATTERN.search(message)
+        if match:
+            ip, port1, port2 = match.groups()
+            return self._build_event(
+                event_type="config_set",
+                component=node_details["component"],
+                template_id="E29",
+                template="My election bind port: /<*>:<*>:<*>",
+                level=level,
+                local_ip=ip,
+                local_port=int(port1),
+                status="info",
+                raw_message=message,
+            )
+        return self._unknown_log(raw_log)
+
+    def _parse_generic(
+        self, message: str, level: str, node_details: Dict, raw_log: str
+    ) -> Dict[str, Any]:
+        """Generic fallback parser for unmatched logs"""
+        return self._build_event(
+            event_type="system_info",
+            component=node_details["component"],
+            level=level,
+            status="info",
+            raw_message=message,
+            parsed_successfully=False,
+            confidence=0.3,
+        )
+
+    # ============================================================================
+    # UTILITY METHODS
+    # ============================================================================
+
+    def _build_event(
+        self,
+        event_type: str,
+        component: str,
+        template_id: Optional[str] = None,
+        template: str = "",
+        level: str = "INFO",
+        local_node_id: Optional[int] = None,
+        local_ip: Optional[str] = None,
+        local_port: Optional[int] = None,
+        remote_ip: Optional[str] = None,
+        remote_port: Optional[int] = None,
+        peer_id: Optional[int] = None,
+        worker_type: Optional[str] = None,
+        socket_id: Optional[str] = None,
+        election_state: Optional[str] = None,
+        notification_timeout: Optional[int] = None,
+        proposed_leader: Optional[int] = None,
+        proposed_zxid: Optional[str] = None,
+        election_round: Optional[int] = None,
+        session_id: Optional[str] = None,
+        timeout_ms: Optional[int] = None,
+        status: Optional[str] = None,
+        error_reason: Optional[str] = None,
+        my_id: Optional[int] = None,
+        have_quorum: Optional[bool] = None,
+        raw_message: str = "",
+        parsed_successfully: bool = True,
+        confidence: float = 1.0,
+    ) -> Dict[str, Any]:
+        """Build a standardized event dictionary"""
+        event = ParsedZookeeperLogEvent(
+            event_type=event_type,
+            component=component,
+            template_id=template_id,
+            template=template,
+            level=level,
+            local_node_id=local_node_id,
+            local_ip=local_ip,
+            local_port=local_port,
+            remote_ip=remote_ip,
+            remote_port=remote_port,
+            peer_id=peer_id,
+            worker_type=worker_type,
+            socket_id=socket_id,
+            election_state=election_state,
+            notification_timeout=notification_timeout,
+            proposed_leader=proposed_leader,
+            proposed_zxid=proposed_zxid,
+            election_round=election_round,
+            session_id=session_id,
+            timeout_ms=timeout_ms,
+            status=status,
+            error_reason=error_reason,
+            my_id=my_id,
+            have_quorum=have_quorum,
+            raw_message=raw_message,
+            parsed_successfully=parsed_successfully,
+            confidence=confidence,
+        )
+        return event.to_dict()
+
+    def _unknown_log(self, log_line: str, error: str = "") -> Dict[str, Any]:
+        """Handle unparseable logs"""
+        return ParsedZookeeperLogEvent(
+            event_type="unknown",
+            component="unknown",
+            level="Unknown",
+            status="parse_error",
+            raw_message=log_line[:200],
+            parsed_successfully=False,
+            confidence=0.0,
+            error_reason=error if error else "Could not match header pattern",
+        ).to_dict()

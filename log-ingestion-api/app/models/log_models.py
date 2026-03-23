@@ -4,13 +4,6 @@ from typing import Optional, Dict
 from uuid import UUID, uuid4
 from enum import Enum
 
-# Allowed log levels (validation rule)
-class LogLevel(str, Enum):
-    INFO = "INFO"
-    WARN = "WARN"
-    ERROR = "ERROR"
-    DEBUG = "DEBUG"
-
 class ServerType(str, Enum):
     LINUX = "linux"
     WINDOWS = "windows"
@@ -22,7 +15,6 @@ class ServerType(str, Enum):
 class LogCreate(BaseModel):
     sid: str  # server id
     timestamp: datetime
-    level: LogLevel
     server_type: ServerType
     log_file: str
     message: str
