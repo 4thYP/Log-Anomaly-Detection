@@ -3,14 +3,13 @@ from app.models.log_models import LogCreate, LogInternal
 from app.repositories.log_repository import LogRepository
 from app.parsers.log_parser import LogParser
 from app.parsers.parser_factory import ParserFactory
-from app.features.linux_feature_extractor import LinuxFeatureExtractor
+from app.features.feature_extractor_factory import FeatureExtractorFactory
 from app.sequences.sequence_builder import SequenceBuilder
 
 class LogService:
     def __init__(self, repository: LogRepository):
         self.repository = repository
         self.parser = LogParser()
-        self.feature_extractor = LinuxFeatureExtractor()
         self.sequence_builder = SequenceBuilder(sequence_length=5)
 
     async def create_log(self, log_data: LogCreate) -> LogInternal:
@@ -30,7 +29,8 @@ class LogService:
         }
 
         # Extract ML features
-        features = self.feature_extractor.extract(internal_log)
+        extractor = FeatureExtractorFactory.get_extractor(log_data.server_type)
+        features = extractor.extract(internal_log)
 
         internal_log.metadata["features"] = features
 
