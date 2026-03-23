@@ -9,7 +9,6 @@ from app.sequences.sequence_builder import SequenceBuilder
 class LogService:
     def __init__(self, repository: LogRepository):
         self.repository = repository
-        self.parser = LogParser()
         self.sequence_builder = SequenceBuilder(sequence_length=5)
 
     async def create_log(self, log_data: LogCreate) -> LogInternal:
@@ -35,12 +34,12 @@ class LogService:
         internal_log.metadata["features"] = features
 
         # Build sequence
-        sequence_result = self.sequence_builder.build_sequence(internal_log)
-
-        internal_log.metadata["sequence_ready"] = sequence_result["ready"]
-
-        if sequence_result["ready"]:
-            internal_log.metadata["sequence"] = sequence_result["sequence"]
+        # sequence_result = self.sequence_builder.build_sequence(internal_log)
+        #
+        # internal_log.metadata["sequence_ready"] = sequence_result["ready"]
+        #
+        # if sequence_result["ready"]:
+        #     internal_log.metadata["sequence"] = sequence_result["sequence"]
 
 
         await self.repository.save(internal_log)
