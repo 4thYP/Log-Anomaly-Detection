@@ -1,68 +1,20 @@
 """
 Production-grade Zookeeper event log parser for Loghub dataset.
 Handles distributed consensus logs from Zookeeper quorum members.
+Uses unified ParsedLogEvent schema for consistent processing.
 """
 
 import re
 from typing import Dict, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
 from datetime import datetime
 
-
 from app.parsers.base_parser import BaseParser
-
-
-@dataclass
-class ParsedZookeeperLogEvent:
-    """Unified schema for all Zookeeper event log entries"""
-
-    # Core identification
-    event_type: str
-    component: str
-    template_id: Optional[str] = None
-    template: str = ""
-    level: str = "INFO"
-
-    # Node/Peer identification
-    local_node_id: Optional[int] = None
-    local_ip: Optional[str] = None
-    local_port: Optional[int] = None
-    remote_ip: Optional[str] = None
-    remote_port: Optional[int] = None
-    peer_id: Optional[int] = None
-
-    # Connection/Worker details
-    worker_type: Optional[str] = None
-    socket_id: Optional[str] = None
-
-    # Leader election
-    election_state: Optional[str] = None
-    notification_timeout: Optional[int] = None
-    proposed_leader: Optional[int] = None
-    proposed_zxid: Optional[str] = None
-    election_round: Optional[int] = None
-
-    # Session management
-    session_id: Optional[str] = None
-    timeout_ms: Optional[int] = None
-
-    # Status & error
-    status: Optional[str] = None
-    error_reason: Optional[str] = None
-
-    # Quorum operations
-    my_id: Optional[int] = None
-    have_quorum: Optional[bool] = None
-
-    # Message/content
-    raw_message: str = ""
-    parsed_successfully: bool = True
-    confidence: float = 1.0
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary, excluding None values"""
-        return {k: v for k, v in asdict(self).items() if v is not None}
-
+from app.parsers.log_event_schema import (
+    ParsedLogEvent,
+    EventGroup,
+    ZookeeperEventType,
+    template_id_from_csv,
+)
 
 class ZookeeperParser(BaseParser):
     """
@@ -315,13 +267,13 @@ class ZookeeperParser(BaseParser):
 
     def parse(self, log_line: str) -> Dict[str, Any]:
         """
-        Parse a single Zookeeper event log line.
+        Parse a single Zookeeper event log line into ParsedLogEvent format.
 
         Args:
             log_line: Raw event log line
 
         Returns:
-            Dictionary with parsed event in standardized format
+            Dictionary representation of ParsedLogEvent (via .to_dict())
         """
         try:
             # Parse header
@@ -330,6 +282,9 @@ class ZookeeperParser(BaseParser):
                 return self._unknown_log(log_line)
 
             date_str, time_str, level, node_component, message = header_match.groups()
+            
+            # Extract and normalize timestamp to ISO 8601
+            timestamp = self._parse_timestamp(date_str, time_str)
 
             # Extract component details
             node_details = self._parse_node_component(node_component)
@@ -337,155 +292,155 @@ class ZookeeperParser(BaseParser):
             # Route to appropriate parser based on message type
             if self.RECEIVED_CONNECTION_PATTERN.search(message):
                 return self._parse_received_connection(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.GOODBYE_PATTERN.search(message):
-                return self._parse_goodbye(message, level, node_details, log_line)
+                return self._parse_goodbye(message, level, node_details, timestamp, log_line)
             elif self.ACCEPTED_SOCKET_PATTERN.search(message):
                 return self._parse_accepted_socket(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.CANNOT_OPEN_CHANNEL_PATTERN.search(message):
                 return self._parse_cannot_open_channel(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.CONNECTION_BROKEN_PATTERN.search(message):
                 return self._parse_connection_broken(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.CLOSED_SOCKET_WITH_SESSION_PATTERN.search(message):
                 return self._parse_closed_socket_with_session(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.CLOSED_SOCKET_NO_SESSION_PATTERN.search(message):
                 return self._parse_closed_socket_no_session(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.NOTIFICATION_PATTERN.search(message):
-                return self._parse_notification(message, level, node_details, log_line)
+                return self._parse_notification(message, level, node_details, timestamp, log_line)
             elif self.NOTIFICATION_TIMEOUT_PATTERN.search(message):
                 return self._parse_notification_timeout(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.NEW_ELECTION_PATTERN.search(message):
-                return self._parse_new_election(message, level, node_details, log_line)
+                return self._parse_new_election(message, level, node_details, timestamp, log_line)
             elif self.LEADER_ELECTION_TOOK_PATTERN.search(message):
                 return self._parse_leader_election_took(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.FOLLOWING_LITERAL_PATTERN.search(message):
-                return self._parse_following(message, level, node_details, log_line)
+                return self._parse_following(message, level, node_details, timestamp, log_line)
             elif self.LOOKING_LITERAL_PATTERN.search(message):
-                return self._parse_looking(message, level, node_details, log_line)
+                return self._parse_looking(message, level, node_details, timestamp, log_line)
             elif self.ESTABLISHED_SESSION_PATTERN.search(message):
                 return self._parse_established_session(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.RENEW_SESSION_PATTERN.search(message):
                 return self._parse_renew_session(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.NEW_SESSION_PATTERN.search(message):
-                return self._parse_new_session(message, level, node_details, log_line)
+                return self._parse_new_session(message, level, node_details, timestamp, log_line)
             elif self.EXPIRING_SESSION_PATTERN.search(message):
                 return self._parse_expiring_session(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.REVALIDATING_CLIENT_PATTERN.search(message):
                 return self._parse_revalidating_client(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.INTERRUPTED_WAITING_PATTERN.search(message):
                 return self._parse_interrupted_waiting(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.INTERRUPTING_SENDWORKER_PATTERN.search(message):
                 return self._parse_interrupting_sendworker(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.SEND_WORKER_LEAVING_PATTERN.search(message):
                 return self._parse_send_worker_leaving(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.HAVE_QUORUM_PATTERN.search(message):
-                return self._parse_have_quorum(message, level, node_details, log_line)
+                return self._parse_have_quorum(message, level, node_details, timestamp, log_line)
             elif self.SMALLER_SERVER_ID_PATTERN.search(message):
                 return self._parse_smaller_server_id(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.FOLLOWER_INFO_PATTERN.search(message):
-                return self._parse_follower_info(message, level, node_details, log_line)
+                return self._parse_follower_info(message, level, node_details, timestamp, log_line)
             elif self.GETTING_SNAPSHOT_PATTERN.search(message):
                 return self._parse_getting_snapshot(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.READING_SNAPSHOT_PATTERN.search(message):
                 return self._parse_reading_snapshot(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.SNAPSHOTTING_PATTERN.search(message):
                 return self._parse_snapshotting(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.END_OF_STREAM_PATTERN.search(message):
                 return self._parse_end_of_stream(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.SESSION_EXCEPTION_PATTERN.search(message):
                 return self._parse_session_exception(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.UNEXPECTED_EXCEPTION_SHUTDOWN_PATTERN.search(message):
                 return self._parse_unexpected_exception_shutdown(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.UNEXPECTED_EXCEPTION_PATTERN.search(message):
                 return self._parse_unexpected_exception(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.KEEPER_EXCEPTION_PATTERN.search(message):
                 return self._parse_keeper_exception(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.AUTOPURGE_INTERVAL_PATTERN.search(message):
                 return self._parse_config_param(
-                    message, level, node_details, log_line, "autopurge_interval", "E3"
+                    message, level, node_details, timestamp, log_line, "autopurge_interval", "E3"
                 )
             elif self.AUTOPURGE_RETAIN_PATTERN.search(message):
                 return self._parse_config_param(
-                    message, level, node_details, log_line, "autopurge_retain", "E4"
+                    message, level, node_details, timestamp, log_line, "autopurge_retain", "E4"
                 )
             elif self.MAX_SESSION_TIMEOUT_PATTERN.search(message):
                 return self._parse_config_param(
-                    message, level, node_details, log_line, "max_session_timeout", "E27"
+                    message, level, node_details, timestamp, log_line, "max_session_timeout", "E27"
                 )
             elif self.MIN_SESSION_TIMEOUT_PATTERN.search(message):
                 return self._parse_config_param(
-                    message, level, node_details, log_line, "min_session_timeout", "E28"
+                    message, level, node_details, timestamp, log_line, "min_session_timeout", "E28"
                 )
             elif self.TICK_TIME_PATTERN.search(message):
                 return self._parse_config_param(
-                    message, level, node_details, log_line, "tick_time", "E48"
+                    message, level, node_details, timestamp, log_line, "tick_time", "E48"
                 )
             elif self.SERVER_ENVIRONMENT_PATTERN.search(message):
                 return self._parse_server_environment(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.SHUTDOWN_COMPLETE_PATTERN.search(message):
                 return self._parse_shutdown_complete(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.STARTING_QUORUM_PEER_PATTERN.search(message):
                 return self._parse_starting_quorum_peer(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             elif self.ELECTION_BIND_PORT_PATTERN.search(message):
                 return self._parse_election_bind_port(
-                    message, level, node_details, log_line
+                    message, level, node_details, timestamp, log_line
                 )
             else:
                 # Generic system info
-                return self._parse_generic(message, level, node_details, log_line)
+                return self._parse_generic(message, level, node_details, timestamp, log_line)
 
         except Exception as e:
             return self._unknown_log(log_line, str(e))
@@ -554,7 +509,7 @@ class ZookeeperParser(BaseParser):
     # ============================================================================
 
     def _parse_received_connection(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E40: Received connection request"""
         match = self.RECEIVED_CONNECTION_PATTERN.search(message)
@@ -562,21 +517,22 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="connection_received",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E40",
                 template="Received connection request /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
-                local_ip=node_details["local_ip"],
-                local_port=node_details["local_port"],
+                local_ip=node_details.get("local_ip"),
+                local_port=node_details.get("local_port"),
                 remote_ip=remote_ip,
-                remote_port=int(remote_port),
+                remote_port=int(remote_port) if remote_port else None,
                 status="success",
                 raw_message=message,
             )
         return self._unknown_log(raw_log)
 
     def _parse_goodbye(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E1: GOODBYE"""
         match = self.GOODBYE_PATTERN.search(message)
@@ -584,9 +540,10 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="connection_goodbye",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E1",
                 template="******* GOODBYE /<*>:<*> ********",
+                timestamp=timestamp,
                 level=level,
                 remote_ip=remote_ip,
                 remote_port=int(remote_port),
@@ -596,7 +553,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_accepted_socket(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E2: Accepted socket connection"""
         match = self.ACCEPTED_SOCKET_PATTERN.search(message)
@@ -604,9 +561,10 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="connection_accepted",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E2",
                 template="Accepted socket connection from /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 remote_ip=remote_ip,
                 remote_port=int(remote_port),
@@ -616,7 +574,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_cannot_open_channel(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E5: Cannot open channel to remote peer"""
         match = self.CANNOT_OPEN_CHANNEL_PATTERN.search(message)
@@ -624,9 +582,10 @@ class ZookeeperParser(BaseParser):
             peer_id, remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="channel_error",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E5",
                 template="Cannot open channel to <*> at election address /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 peer_id=int(peer_id),
                 remote_ip=remote_ip,
@@ -638,7 +597,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_connection_broken(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E11: Connection broken for id <id>, my id = <myid>"""
         match = self.CONNECTION_BROKEN_PATTERN.search(message)
@@ -646,9 +605,10 @@ class ZookeeperParser(BaseParser):
             peer_id, my_id = match.groups()
             return self._build_event(
                 event_type="connection_broken",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E11",
                 template="Connection broken for id <*>, my id = <*>, error =",
+                timestamp=timestamp,
                 level=level,
                 peer_id=int(peer_id),
                 my_id=int(my_id),
@@ -659,7 +619,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_closed_socket_with_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E10: Closed socket connection for client (with session)"""
         match = self.CLOSED_SOCKET_WITH_SESSION_PATTERN.search(message)
@@ -667,9 +627,10 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port, session_id = match.groups()
             return self._build_event(
                 event_type="session_closed",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E10",
                 template="Closed socket connection for client /<*>:<*> which had sessionid <*>",
+                timestamp=timestamp,
                 level=level,
                 remote_ip=remote_ip,
                 remote_port=int(remote_port),
@@ -680,7 +641,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_closed_socket_no_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E9: Closed socket connection for client (no session)"""
         match = self.CLOSED_SOCKET_NO_SESSION_PATTERN.search(message)
@@ -688,9 +649,10 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="session_closed",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E9",
                 template="Closed socket connection for client /<*>:<*> (no session established for client)",
+                timestamp=timestamp,
                 level=level,
                 remote_ip=remote_ip,
                 remote_port=int(remote_port),
@@ -700,7 +662,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_notification(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E32-E37: Notification with full election state"""
         match = self.NOTIFICATION_PATTERN.search(message)
@@ -716,9 +678,10 @@ class ZookeeperParser(BaseParser):
             ) = match.groups()
             return self._build_event(
                 event_type="election_notification",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E32-E37",
                 template="Notification: <*> (n.leader), <*> (n.zxid), <*> (n.round), <*> (n.state), <*> (n.sid), <*> (n.peerEpoch), <*> (my state)",
+                timestamp=timestamp,
                 level=level,
                 proposed_leader=int(leader),
                 proposed_zxid=zxid,
@@ -730,7 +693,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_notification_timeout(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E31: Notification time out"""
         match = self.NOTIFICATION_TIMEOUT_PATTERN.search(message)
@@ -738,9 +701,10 @@ class ZookeeperParser(BaseParser):
             timeout = int(match.group(1))
             return self._build_event(
                 event_type="election_notification_timeout",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E31",
                 template="Notification time out: <*>",
+                timestamp=timestamp,
                 level=level,
                 notification_timeout=timeout,
                 status="info",
@@ -749,7 +713,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_new_election(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E30: New election"""
         match = self.NEW_ELECTION_PATTERN.search(message)
@@ -757,9 +721,10 @@ class ZookeeperParser(BaseParser):
             my_id, proposed_zxid = match.groups()
             return self._build_event(
                 event_type="election_start",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E30",
                 template="New election. My id =  <*>, proposed zxid=<*>",
+                timestamp=timestamp,
                 level=level,
                 my_id=int(my_id),
                 proposed_zxid=proposed_zxid,
@@ -769,7 +734,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_leader_election_took(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E19: Leader election took <time>"""
         match = self.LEADER_ELECTION_TOOK_PATTERN.search(message)
@@ -777,9 +742,10 @@ class ZookeeperParser(BaseParser):
             time_ms = int(match.group(1))
             return self._build_event(
                 event_type="election_took",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E19",
                 template="FOLLOWING - LEADER ELECTION TOOK - <*>",
+                timestamp=timestamp,
                 level=level,
                 timeout_ms=time_ms,
                 status="success",
@@ -788,14 +754,15 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_following(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E18: FOLLOWING state"""
         return self._build_event(
             event_type="election_state_change",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E18",
             template="FOLLOWING",
+            timestamp=timestamp,
             level=level,
             election_state="FOLLOWING",
             status="success",
@@ -803,14 +770,15 @@ class ZookeeperParser(BaseParser):
         )
 
     def _parse_looking(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E26: LOOKING state"""
         return self._build_event(
             event_type="election_state_change",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E26",
             template="LOOKING",
+            timestamp=timestamp,
             level=level,
             election_state="LOOKING",
             status="info",
@@ -818,7 +786,7 @@ class ZookeeperParser(BaseParser):
         )
 
     def _parse_established_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E13: Established session"""
         match = self.ESTABLISHED_SESSION_PATTERN.search(message)
@@ -826,9 +794,10 @@ class ZookeeperParser(BaseParser):
             session_id, timeout, remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="session_established",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E13",
                 template="Established session <*> with negotiated timeout <*> for client /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 timeout_ms=int(timeout),
@@ -840,7 +809,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_renew_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E8: Client attempting to renew session"""
         match = self.RENEW_SESSION_PATTERN.search(message)
@@ -848,9 +817,10 @@ class ZookeeperParser(BaseParser):
             session_id, remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="session_renew",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E8",
                 template="Client attempting to renew session <*> at /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 remote_ip=remote_ip,
@@ -861,7 +831,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_new_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E7: Client attempting to establish new session"""
         match = self.NEW_SESSION_PATTERN.search(message)
@@ -869,9 +839,10 @@ class ZookeeperParser(BaseParser):
             remote_ip, remote_port = match.groups()
             return self._build_event(
                 event_type="session_new",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E7",
                 template="Client attempting to establish new session at /<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 remote_ip=remote_ip,
                 remote_port=int(remote_port),
@@ -881,7 +852,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_expiring_session(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E15: Expiring session"""
         match = self.EXPIRING_SESSION_PATTERN.search(message)
@@ -889,9 +860,10 @@ class ZookeeperParser(BaseParser):
             session_id, timeout_ms = match.groups()
             return self._build_event(
                 event_type="session_expired",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E15",
                 template="Expiring session <*>, timeout of <*>ms exceeded",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 timeout_ms=int(timeout_ms),
@@ -901,7 +873,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_revalidating_client(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E41: Revalidating client"""
         match = self.REVALIDATING_CLIENT_PATTERN.search(message)
@@ -909,9 +881,10 @@ class ZookeeperParser(BaseParser):
             session_id = match.group(1)
             return self._build_event(
                 event_type="session_revalidation",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E41",
                 template="Revalidating client: <*>",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 status="info",
@@ -920,55 +893,58 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_interrupted_waiting(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E24: Interrupted while waiting for message on queue"""
         return self._build_event(
             event_type="worker_interrupted",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E24",
             template="Interrupted while waiting for message on queue",
+            timestamp=timestamp,
             level=level,
-            worker_type=node_details["worker_type"],
-            socket_id=node_details["socket_id"],
+            worker_type=node_details.get("worker_type"),
+            socket_id=node_details.get("socket_id"),
             status="warning",
             raw_message=message,
         )
 
     def _parse_interrupting_sendworker(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E25: Interrupting SendWorker"""
         return self._build_event(
             event_type="worker_interrupt_send",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E25",
             template="Interrupting SendWorker",
+            timestamp=timestamp,
             level=level,
-            worker_type=node_details["worker_type"],
-            socket_id=node_details["socket_id"],
+            worker_type=node_details.get("worker_type"),
+            socket_id=node_details.get("socket_id"),
             status="warning",
             raw_message=message,
         )
 
     def _parse_send_worker_leaving(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E42: Send worker leaving thread"""
         return self._build_event(
             event_type="worker_send_leaving",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E42",
             template="Send worker leaving thread",
+            timestamp=timestamp,
             level=level,
             worker_type="SendWorker",
-            socket_id=node_details["socket_id"],
+            socket_id=node_details.get("socket_id"),
             status="warning",
             raw_message=message,
         )
 
     def _parse_have_quorum(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E22: Have quorum of supporters"""
         match = self.HAVE_QUORUM_PATTERN.search(message)
@@ -976,9 +952,10 @@ class ZookeeperParser(BaseParser):
             zxid = match.group(1)
             return self._build_event(
                 event_type="quorum_achieved",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E22",
                 template="Have quorum of supporters; starting up and setting last processed zxid: <*>",
+                timestamp=timestamp,
                 level=level,
                 proposed_zxid=zxid,
                 have_quorum=True,
@@ -988,7 +965,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_smaller_server_id(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E23: Have smaller server identifier"""
         match = self.SMALLER_SERVER_ID_PATTERN.search(message)
@@ -996,9 +973,10 @@ class ZookeeperParser(BaseParser):
             id1, id2 = match.groups()
             return self._build_event(
                 event_type="connection_dropped",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E23",
                 template="Have smaller server identifier, so dropping the connection: (<*>, <*>)",
+                timestamp=timestamp,
                 level=level,
                 status="info",
                 raw_message=message,
@@ -1006,7 +984,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_follower_info(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E17: Follower sid info"""
         match = self.FOLLOWER_INFO_PATTERN.search(message)
@@ -1014,9 +992,10 @@ class ZookeeperParser(BaseParser):
             sid = int(match.group(1))
             return self._build_event(
                 event_type="follower_info",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E17",
                 template="Follower sid: <*> : info : org.apache.zookeeper.server.quorum.QuorumPeer$QuorumServer@<*>",
+                timestamp=timestamp,
                 level=level,
                 peer_id=sid,
                 status="info",
@@ -1025,21 +1004,22 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_getting_snapshot(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E20: Getting snapshot from leader"""
         return self._build_event(
             event_type="getting_snapshot",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E20",
             template="Getting a snapshot from leader",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
         )
 
     def _parse_reading_snapshot(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E39: Reading snapshot"""
         match = self.READING_SNAPSHOT_PATTERN.search(message)
@@ -1047,9 +1027,10 @@ class ZookeeperParser(BaseParser):
             snapshot_id = match.group(1)
             return self._build_event(
                 event_type="snapshot_reading",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E39",
                 template="Reading snapshot <*>",
+                timestamp=timestamp,
                 level=level,
                 status="info",
                 raw_message=message,
@@ -1057,7 +1038,7 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_snapshotting(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E46: Snapshotting"""
         match = self.SNAPSHOTTING_PATTERN.search(message)
@@ -1065,9 +1046,10 @@ class ZookeeperParser(BaseParser):
             from_val, to_val = match.groups()
             return self._build_event(
                 event_type="snapshot_writing",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E46",
                 template="Snapshotting: <*> to <*>",
+                timestamp=timestamp,
                 level=level,
                 status="info",
                 raw_message=message,
@@ -1075,14 +1057,15 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_end_of_stream(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E6: End of stream exception"""
         return self._build_event(
             event_type="end_of_stream",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E6",
             template="caught end of stream exception",
+            timestamp=timestamp,
             level=level,
             status="failure",
             error_reason="End of stream",
@@ -1090,7 +1073,7 @@ class ZookeeperParser(BaseParser):
         )
 
     def _parse_session_exception(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E14: Session exception"""
         match = self.SESSION_EXCEPTION_PATTERN.search(message)
@@ -1098,9 +1081,10 @@ class ZookeeperParser(BaseParser):
             session_id, error = match.groups()
             return self._build_event(
                 event_type="server_not_running",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E14",
                 template="Exception causing close of session <*> due to java.io.IOException: <*>",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 status="failure",
@@ -1110,14 +1094,15 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_unexpected_exception_shutdown(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E49: Unexpected exception shutdown"""
         return self._build_event(
             event_type="exception_error",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E49",
             template="Unexpected exception causing shutdown while sock still open",
+            timestamp=timestamp,
             level=level,
             status="failure",
             error_reason="Unexpected exception",
@@ -1125,14 +1110,15 @@ class ZookeeperParser(BaseParser):
         )
 
     def _parse_unexpected_exception(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E50: Unexpected Exception"""
         return self._build_event(
             event_type="exception_error",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E50",
             template="Unexpected Exception:",
+            timestamp=timestamp,
             level=level,
             status="failure",
             error_reason="Unexpected exception",
@@ -1140,7 +1126,7 @@ class ZookeeperParser(BaseParser):
         )
 
     def _parse_keeper_exception(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E21: KeeperException"""
         match = self.KEEPER_EXCEPTION_PATTERN.search(message)
@@ -1148,9 +1134,10 @@ class ZookeeperParser(BaseParser):
             session_id = match.group(1)
             return self._build_event(
                 event_type="keeper_exception",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E21",
                 template="Got user-level KeeperException when processing sessionid:<*> type:<*> cxid:<*> zxid:<*> txntype:<*> reqpath:<*> Error Path:<*> Error:<*>",
+                timestamp=timestamp,
                 level=level,
                 session_id=session_id,
                 status="failure",
@@ -1164,6 +1151,7 @@ class ZookeeperParser(BaseParser):
         message: str,
         level: str,
         node_details: Dict,
+        timestamp: str,
         raw_log: str,
         param_name: str,
         template_id: str,
@@ -1171,58 +1159,62 @@ class ZookeeperParser(BaseParser):
         """Configuration parameter set"""
         return self._build_event(
             event_type="config_set",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id=template_id,
             template=f"{param_name} set to <*>",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
         )
 
     def _parse_server_environment(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E44: Server environment"""
         return self._build_event(
             event_type="server_environment",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E44",
             template="Server environment:<*>",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
         )
 
     def _parse_shutdown_complete(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E45: Shutdown complete"""
         return self._build_event(
             event_type="shutdown_complete",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E45",
             template="shutdown of request processor complete",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
         )
 
     def _parse_starting_quorum_peer(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E47: Starting quorum peer"""
         return self._build_event(
             event_type="service_start",
-            component=node_details["component"],
+            component=node_details.get("component"),
             template_id="E47",
             template="Starting quorum peer",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
         )
 
     def _parse_election_bind_port(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """E29: Election bind port"""
         match = self.ELECTION_BIND_PORT_PATTERN.search(message)
@@ -1230,9 +1222,10 @@ class ZookeeperParser(BaseParser):
             ip, port1, port2 = match.groups()
             return self._build_event(
                 event_type="config_set",
-                component=node_details["component"],
+                component=node_details.get("component"),
                 template_id="E29",
                 template="My election bind port: /<*>:<*>:<*>",
+                timestamp=timestamp,
                 level=level,
                 local_ip=ip,
                 local_port=int(port1),
@@ -1242,22 +1235,102 @@ class ZookeeperParser(BaseParser):
         return self._unknown_log(raw_log)
 
     def _parse_generic(
-        self, message: str, level: str, node_details: Dict, raw_log: str
+        self, message: str, level: str, node_details: Dict, timestamp: str, raw_log: str
     ) -> Dict[str, Any]:
         """Generic fallback parser for unmatched logs"""
         return self._build_event(
             event_type="system_info",
-            component=node_details["component"],
+            component=node_details.get("component"),
+            template_id="",
+            timestamp=timestamp,
             level=level,
             status="info",
             raw_message=message,
-            parsed_successfully=False,
-            confidence=0.3,
         )
 
     # ============================================================================
     # UTILITY METHODS
     # ============================================================================
+
+    @staticmethod
+    def _parse_timestamp(date_str: str, time_str: str) -> str:
+        """
+        Parse timestamp from Zookeeper log header and convert to ISO 8601 format.
+        
+        Args:
+            date_str: Date in "YYYY-MM-DD" format
+            time_str: Time in "HH:MM:SS,mmm" format
+            
+        Returns:
+            ISO 8601 timestamp string (YYYY-MM-DDTHH:MM:SS)
+        """
+        try:
+            # Remove milliseconds from time_str: "HH:MM:SS,mmm" -> "HH:MM:SS"
+            time_without_ms = time_str.split(',')[0]
+            dt = datetime.strptime(f"{date_str} {time_without_ms}", "%Y-%m-%d %H:%M:%S")
+            return dt.isoformat()
+        except (ValueError, TypeError, IndexError):
+            return ""
+
+    @staticmethod
+    def _get_event_group(event_type: str) -> str:
+        """Map Zookeeper event types to standard event groups"""
+        event_group_map = {
+            # Connection events
+            "connection_received": EventGroup.CONNECTION.value,
+            "connection_broken": EventGroup.CONNECTION.value,
+            "accepted_socket": EventGroup.CONNECTION.value,
+            "cannot_open_channel": EventGroup.CONNECTION.value,
+            "closed_socket_with_session": EventGroup.SESSION.value,
+            "closed_socket_no_session": EventGroup.CONNECTION.value,
+            "goodbye": EventGroup.CONNECTION.value,
+            
+            # Election events
+            "election_notification": EventGroup.ELECTION.value,
+            "election_state_change": EventGroup.ELECTION.value,
+            "new_election": EventGroup.ELECTION.value,
+            "leader_election_took": EventGroup.ELECTION.value,
+            "following": EventGroup.ELECTION.value,
+            "looking": EventGroup.ELECTION.value,
+            "election_bind_port": EventGroup.ELECTION.value,
+            
+            # Session events
+            "established_session": EventGroup.SESSION.value,
+            "renew_session": EventGroup.SESSION.value,
+            "new_session": EventGroup.SESSION.value,
+            "expiring_session": EventGroup.SESSION.value,
+            "revalidating_client": EventGroup.SESSION.value,
+            
+            # Worker events
+            "interrupted_waiting": EventGroup.WORKER.value,
+            "interrupting_sendworker": EventGroup.WORKER.value,
+            "send_worker_leaving": EventGroup.WORKER.value,
+            
+            # Quorum events
+            "have_quorum": EventGroup.QUORUM.value,
+            "smaller_server_id": EventGroup.QUORUM.value,
+            "follower_info": EventGroup.QUORUM.value,
+            
+            # Data/snapshot events
+            "getting_snapshot": EventGroup.SYSTEM_INFO.value,
+            "reading_snapshot": EventGroup.SYSTEM_INFO.value,
+            "snapshotting": EventGroup.SYSTEM_INFO.value,
+            "end_of_stream": EventGroup.SYSTEM_INFO.value,
+            
+            # Error events
+            "session_exception": EventGroup.ERROR.value,
+            "unexpected_exception_shutdown": EventGroup.ERROR.value,
+            "unexpected_exception": EventGroup.ERROR.value,
+            "keeper_exception": EventGroup.ERROR.value,
+            
+            # Configuration/system events
+            "config_param": EventGroup.SYSTEM_INFO.value,
+            "server_environment": EventGroup.SYSTEM_INFO.value,
+            "shutdown_complete": EventGroup.SYSTEM_INFO.value,
+            "starting_quorum_peer": EventGroup.SYSTEM_INFO.value,
+            "generic": EventGroup.SYSTEM_INFO.value,
+        }
+        return event_group_map.get(event_type, EventGroup.UNKNOWN.value)
 
     def _build_event(
         self,
@@ -1265,6 +1338,7 @@ class ZookeeperParser(BaseParser):
         component: str,
         template_id: Optional[str] = None,
         template: str = "",
+        timestamp: str = "",
         level: str = "INFO",
         local_node_id: Optional[int] = None,
         local_ip: Optional[str] = None,
@@ -1286,50 +1360,84 @@ class ZookeeperParser(BaseParser):
         my_id: Optional[int] = None,
         have_quorum: Optional[bool] = None,
         raw_message: str = "",
-        parsed_successfully: bool = True,
-        confidence: float = 1.0,
     ) -> Dict[str, Any]:
-        """Build a standardized event dictionary"""
-        event = ParsedZookeeperLogEvent(
+        """
+        Build a ParsedLogEvent from Zookeeper components.
+        
+        Converts Zookeeper-specific data into unified ParsedLogEvent format.
+        """
+        # Convert template_id from string ("E40") to integer (40)
+        template_id_int = 0
+        if template_id:
+            try:
+                template_id_int = template_id_from_csv(template_id)
+            except (ValueError, TypeError):
+                template_id_int = 0
+        
+        # Get the event group for this event type
+        event_group = self._get_event_group(event_type)
+        
+        # Build metadata dict with all optional/context-specific fields
+        metadata = {}
+        if local_node_id is not None:
+            metadata["local_node_id"] = local_node_id
+        if local_ip:
+            metadata["local_ip"] = local_ip
+        if local_port is not None:
+            metadata["local_port"] = local_port
+        if remote_ip:
+            metadata["remote_ip"] = remote_ip
+        if remote_port is not None:
+            metadata["remote_port"] = remote_port
+        if peer_id is not None:
+            metadata["peer_id"] = peer_id
+        if worker_type:
+            metadata["worker_type"] = worker_type
+        if socket_id:
+            metadata["socket_id"] = socket_id
+        if election_state:
+            metadata["election_state"] = election_state
+        if notification_timeout is not None:
+            metadata["notification_timeout"] = notification_timeout
+        if proposed_leader is not None:
+            metadata["proposed_leader"] = proposed_leader
+        if proposed_zxid:
+            metadata["proposed_zxid"] = proposed_zxid
+        if election_round is not None:
+            metadata["election_round"] = election_round
+        if session_id:
+            metadata["session_id"] = session_id
+        if timeout_ms is not None:
+            metadata["timeout_ms"] = timeout_ms
+        if my_id is not None:
+            metadata["my_id"] = my_id
+        if have_quorum is not None:
+            metadata["have_quorum"] = have_quorum
+        if raw_message:
+            metadata["raw_message"] = raw_message
+        if error_reason:
+            metadata["error_reason"] = error_reason
+        if level and level != "INFO":
+            metadata["log_level"] = level
+        
+        # Create ParsedLogEvent with unified schema
+        event = ParsedLogEvent(
             event_type=event_type,
+            event_group=event_group,
             component=component,
-            template_id=template_id,
-            template=template,
-            level=level,
-            local_node_id=local_node_id,
-            local_ip=local_ip,
-            local_port=local_port,
-            remote_ip=remote_ip,
-            remote_port=remote_port,
-            peer_id=peer_id,
-            worker_type=worker_type,
-            socket_id=socket_id,
-            election_state=election_state,
-            notification_timeout=notification_timeout,
-            proposed_leader=proposed_leader,
-            proposed_zxid=proposed_zxid,
-            election_round=election_round,
-            session_id=session_id,
-            timeout_ms=timeout_ms,
-            status=status,
-            error_reason=error_reason,
-            my_id=my_id,
-            have_quorum=have_quorum,
-            raw_message=raw_message,
-            parsed_successfully=parsed_successfully,
-            confidence=confidence,
+            template=template if template else "",
+            template_id=template_id_int,
+            timestamp=timestamp,
+            status=status if status else "info",
+            metadata=metadata
         )
+        
         return event.to_dict()
 
     def _unknown_log(self, log_line: str, error: str = "") -> Dict[str, Any]:
-        """Handle unparseable logs"""
-        return ParsedZookeeperLogEvent(
-            event_type="unknown",
+        """Handle unparseable logs using unified ParsedLogEvent schema"""
+        return ParsedLogEvent.unknown_event(
+            log_line=log_line[:200] if log_line else "",
             component="unknown",
-            level="Unknown",
-            status="parse_error",
-            raw_message=log_line[:200],
-            parsed_successfully=False,
-            confidence=0.0,
-            error_reason=error if error else "Could not match header pattern",
+            error=error if error else "Could not match header pattern"
         ).to_dict()

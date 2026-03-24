@@ -8,7 +8,8 @@ from datetime import datetime
 from typing import Dict, Any
 
 from app.models.log_models import LogInternal, ServerType
-from app.parsers.windows_parser import WindowsParser, ParsedWindowsLogEvent
+from app.parsers.windows_parser import WindowsParser
+from app.parsers.log_event_schema import ParsedLogEvent
 from app.features.windows_feature_extractor import (
     WindowsFeatureExtractor,
     get_windows_feature_extractor,
@@ -131,9 +132,10 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "service_start"
+        assert result["event_group"] == "service"
         assert result["component"] == "CBS"
         assert result["status"] == "success"
-        assert result["template_id"] == "E48"
+        assert result["template_id"] == 48  # Now integer instead of "E48"
         assert result["parsed_successfully"] is True
         assert result["confidence"] == 1.0
 
@@ -143,9 +145,10 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "service_stop"
+        assert result["event_group"] == "service"
         assert result["component"] == "CBS"
         assert result["status"] == "success"
-        assert result["template_id"] == "E15"
+        assert result["template_id"] == 15  # Now integer
 
     def test_transaction_create_success(self, parser: WindowsParser):
         """Test successful transaction creation"""
@@ -153,11 +156,12 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "transaction_create"
+        assert result["event_group"] == "transaction"
         assert result["component"] == "CSI"
         assert result["status"] == "success"
-        assert result["hresult"] == "0x00000000"
-        assert result["sequence_number"] == 1
-        assert result["handle"] == "@0x158"
+        assert result["metadata"]["hresult"] == "0x00000000"
+        assert result["metadata"]["sequence_number"] == 1
+        assert result["metadata"]["handle"] == "@0x158"
 
     def test_transaction_create_failure(self, parser: WindowsParser):
         """Test failed transaction creation"""
@@ -166,7 +170,7 @@ class TestWindowsParser:
 
         assert result["event_type"] == "transaction_create"
         assert result["status"] == "failure"
-        assert result["hresult"] == "0x80004005"
+        assert result["metadata"]["hresult"] == "0x80004005"
 
     def test_package_applicability_parsing(self, parser: WindowsParser):
         """Test package applicability event"""
@@ -174,21 +178,23 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "package_applicability"
+        assert result["event_group"] == "package"
         assert result["component"] == "CBS"
         assert result["status"] == "success"
-        assert result["template_id"] == "E29"
-        assert "Package_for_KB2919355" in result["package_name"]
+        assert result["template_id"] == 29  # Now integer
+        assert "Package_for_KB2919355" in result["metadata"]["package_name"]
 
     def test_session_initialization_parsing(self, parser: WindowsParser):
         """Test session initialization event"""
         log_line = WindowsLogSamples.session_initialized()
         result = parser.parse(log_line)
 
-        assert result["event_type"] == "session_initialized"
+        assert result["event_type"] == "session_init"  # Updated event_type
+        assert result["event_group"] == "session" 
         assert result["component"] == "CBS"
         assert result["status"] == "success"
-        assert result["session_id"] == "305_1"
-        assert result["client"] == "WindowsUpdateAgent"
+        assert result["metadata"]["session_id"] == "305_1"  # Now in metadata
+        assert result["metadata"]["client"] == "WindowsUpdateAgent"
 
     def test_manifest_error_parsing(self, parser: WindowsParser):
         """Test manifest parsing error"""
@@ -196,10 +202,11 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "manifest_error"
+        assert result["event_group"] == "error"
         assert result["component"] == "CBS"
         assert result["status"] == "failure"
-        assert result["hresult"] == "0x800f080d"
-        assert result["error_name"] == "CBS_E_MANIFEST_INVALID_ITEM"
+        assert result["metadata"]["hresult"] == "0x800f080d"
+        assert result["metadata"]["error_code"] == "CBS_E_MANIFEST_INVALID_ITEM"
 
     def test_parse_error_parsing(self, parser: WindowsParser):
         """Test parse error event"""
@@ -207,9 +214,10 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "parse_error"
+        assert result["event_group"] == "error"
         assert result["component"] == "CBS"
         assert result["status"] == "failure"
-        assert result["hresult"] == "0x800f080d"
+        assert result["metadata"]["hresult"] == "0x800f080d"
 
     def test_package_error_parsing(self, parser: WindowsParser):
         """Test package operation error"""
@@ -217,31 +225,34 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "package_error"
+        assert result["event_group"] == "package"
         assert result["component"] == "CBS"
         assert result["status"] == "failure"
-        assert result["hresult"] == "0x80073cf9"
-        assert result["error_name"] == "CBS_E_INVALID_PACKAGE"
+        assert result["metadata"]["hresult"] == "0x80073cf9"
+        assert result["metadata"]["error_code"] == "CBS_E_INVALID_PACKAGE"
 
     def test_sqm_upload_error_parsing(self, parser: WindowsParser):
         """Test SQM upload failure"""
         log_line = WindowsLogSamples.sqm_upload_failed()
         result = parser.parse(log_line)
 
-        assert result["event_type"] == "upload_error"
+        assert result["event_type"] == "sqm_upload_failed"  # Updated event_type
+        assert result["event_group"] == "error"
         assert result["component"] == "CBS"
         assert result["status"] == "failure"
-        assert result["hresult"] == "0x80070005"
-        assert result["error_name"] == "E_FAIL"
-        assert result["template_id"] == "E39"
+        assert result["metadata"]["hresult"] == "0x80070005"
+        assert result["metadata"]["error_code"] == "E_FAIL"
+        assert result["template_id"] == 39  # Now integer
 
     def test_sqm_upload_error_alt_parsing(self, parser: WindowsParser):
         """Test alternative SQM upload failure"""
         log_line = WindowsLogSamples.sqm_upload_failed_alt()
         result = parser.parse(log_line)
 
-        assert result["event_type"] == "upload_error"
+        assert result["event_type"] == "sqm_upload_failed"  # Updated event_type
+        assert result["event_group"] == "error"
         assert result["status"] == "failure"
-        assert result["template_id"] == "E38"
+        assert result["template_id"] == 38
 
     def test_warning_parsing(self, parser: WindowsParser):
         """Test unrecognized attribute warning"""
@@ -249,6 +260,7 @@ class TestWindowsParser:
         result = parser.parse(log_line)
 
         assert result["event_type"] == "parse_error"
+        assert result["event_group"] == "error"
         assert result["status"] == "warning"
 
     def test_csi_perf_trace_parsing(self, parser: WindowsParser):
