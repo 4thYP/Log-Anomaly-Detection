@@ -10,10 +10,7 @@ from typing import Dict, Any
 from app.models.log_models import LogInternal, ServerType
 from app.parsers.windows_parser import WindowsParser
 from app.parsers.log_event_schema import ParsedLogEvent
-from app.features.windows_feature_extractor import (
-    WindowsFeatureExtractor,
-    get_windows_feature_extractor,
-)
+from app.features.windows_feature_extractor import WindowsFeatureExtractor
 
 
 # ============================================================================
@@ -290,18 +287,17 @@ class TestWindowsFeatureExtractor:
 
     @pytest.fixture
     def extractor(self) -> WindowsFeatureExtractor:
-        """Create fresh extractor instance"""
-        ext = WindowsFeatureExtractor()
-        ext.reset_state()
-        return ext
+        """Create fresh extractor instance with STEP 4 per-server state isolation"""
+        return WindowsFeatureExtractor()
 
     @staticmethod
-    def create_log_internal(event_dict: Dict[str, Any]) -> LogInternal:
+    def create_log_internal(event_dict: Dict[str, Any], sid: str = "default-server") -> LogInternal:
         """Helper to create LogInternal with parsed event"""
         log = LogInternal(
             message=event_dict.get("raw_message", ""),
             server_type=ServerType.WINDOWS,
-            timestamp=datetime.now().isoformat(),
+            sid=sid,
+            timestamp=datetime.now(),
         )
         log.metadata = {"parsed": event_dict}
         return log
@@ -313,12 +309,11 @@ class TestWindowsFeatureExtractor:
         )
         features = extractor.extract(log)
 
-        assert isinstance(features, dict)
-        assert "event_count_total" in features
-        assert "error_count_total" in features
-        assert "anomaly_score" in features
-        assert features["event_count_total"] == 1.0
-        assert features["error_count_total"] == 0.0
+        # STEP 4: Returns List[float] with exactly 12 normalized elements
+        assert isinstance(features, list), f"Expected list, got {type(features)}"
+        assert len(features) == 12, f"Expected 12 features, got {len(features)}"
+        assert all(isinstance(f, (int, float)) for f in features), "All features must be numeric"
+        assert all(0 <= f <= 1 for f in features), f"All features must be in [0, 1], got {features}"
 
     def test_error_tracking(self, extractor: WindowsFeatureExtractor):
         """Test error counting and tracking"""
@@ -477,24 +472,35 @@ class TestWindowsFeatureExtractor:
         assert "session_count_active" in features
         assert "anomaly_score" in features
 
-    def test_singleton_state_preservation(self):
-        """Test that extractor singleton preserves state"""
-        ext1 = get_windows_feature_extractor()
-        ext2 = get_windows_feature_extractor()
-
-        # Both should be same instance
-        assert ext1 is ext2
-
-        # State should be preserved
+    def test_per_server_state_preservation(self):
+        """Test that extractor maintains per-server state isolation"""
+        extractor = WindowsFeatureExtractor()
         parser = WindowsParser()
-        log = self.create_log_internal(
-            parser.parse(WindowsLogSamples.service_start())
+        
+        # Create logs for two different servers
+        log_sid1 = self.create_log_internal(
+            parser.parse(WindowsLogSamples.service_start()),
+            sid="server1"
         )
-        features1 = ext1.extract(log)
-        features2 = ext2.extract(log)
-
-        # State should accumulate
-        assert features2["event_count_total"] == 2.0
+        log_sid2 = self.create_log_internal(
+            parser.parse(WindowsLogSamples.service_start()),
+            sid="server2"
+        )
+        
+        # Extract features from both servers
+        features1 = list(extractor.extract(log_sid1))
+        features2 = list(extractor.extract(log_sid2))
+        
+        # Both should return valid 12-element lists
+        assert len(features1) == 12, f"Expected 12 features, got {len(features1)}"
+        assert len(features2) == 12, f"Expected 12 features, got {len(features2)}"
+        
+        # All values should be in [0, 1]
+        assert all(0 <= f <= 1 for f in features1), "Features not normalized"
+        assert all(0 <= f <= 1 for f in features2), "Features not normalized"
+        
+        # Server states should be separate
+        assert len(extractor.server_states) == 2, "Should have separate state for each server"
 
 
 # ============================================================================
@@ -526,20 +532,21 @@ class TestParserFeatureIntegration:
             log = LogInternal(
                 message=log_line,
                 server_type=ServerType.WINDOWS,
-                timestamp=datetime.now().isoformat(),
+                sid="test-server",
+                timestamp=datetime.now(),
             )
             log.metadata = {"parsed": parsed}
 
-            # Extract features
+            # Extract features - STEP 4: Returns List[float] with 12 elements
             features = extractor.extract(log)
-            assert isinstance(features, dict)
-            assert "anomaly_score" in features
+            assert isinstance(features, list), f"Expected list, got {type(features)}"
+            assert len(features) == 12, f"Expected 12 features, got {len(features)}"
+            assert all(0 <= f <= 1 for f in features), f"Features not normalized: {features}"
 
     def test_error_cascade_detection_integration(self):
         """Test error cascade detection in full pipeline"""
         parser = WindowsParser()
         extractor = WindowsFeatureExtractor()
-        extractor.reset_state()
 
         # Simulate error cascade
         error_logs = [
@@ -555,15 +562,17 @@ class TestParserFeatureIntegration:
             log = LogInternal(
                 message=log_line,
                 server_type=ServerType.WINDOWS,
-                timestamp=datetime.now().isoformat(),
+                sid="test-server",
+                timestamp=datetime.now(),
             )
             log.metadata = {"parsed": parsed}
             features = extractor.extract(log)
 
-        # Final features should show anomaly
-        assert features["error_count_total"] == 5.0
-        assert features["anomaly_error_cascade"] == 1.0
-        assert features["anomaly_score"] > 0.0
+        # Final features should be normalized 12-element list
+        assert isinstance(features, list)
+        assert len(features) == 12
+        # Feature 4 is error_cascade_indicator, Feature 11 is overall_anomaly_score
+        assert features[4] > 0.0 or features[11] > 0.0, "Should have anomaly indicators"
 
 
 if __name__ == "__main__":

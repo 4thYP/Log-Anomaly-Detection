@@ -1,506 +1,490 @@
 """
-Production-grade Windows feature extractor for anomaly detection.
-Stateful extraction of 50+ numeric features from parsed Windows events.
+STEP 4: Stateful feature extractor for Windows event logs.
+Tracks per-server behavioral patterns with fixed 12-element feature vectors.
 """
 
 from collections import defaultdict, deque
-from typing import Dict, Optional, Any, Set, Tuple
+from typing import Dict, Optional, Any, List
 from datetime import datetime, timedelta
-import math
+from enum import IntEnum
 
 from app.models.log_models import LogInternal
 
 
-class WindowsFeatureExtractor:
-    """
-    Stateful feature extractor for Windows event logs.
+class WindowsEventTypeCode(IntEnum):
+    """Numeric encoding for Windows event types"""
+    SERVICE_START = 1
+    SERVICE_STOP = 2
+    TRANSACTION_CREATE = 3
+    TRANSACTION_CLOSE = 4
+    PACKAGE_APPLICABILITY = 5
+    PACKAGE_ERROR = 6
+    SESSION_INITIALIZED = 7
+    SESSION_DESTROYED = 8
+    MANIFEST_ERROR = 9
+    PARSE_ERROR = 10
+    UPLOAD_ERROR = 11
+    CRYPT_ERROR = 12
+    REGISTRY_ERROR = 13
+    FILE_ERROR = 14
+    HRESULT_ERROR = 15
+    UNKNOWN = 16
+
+
+class WindowsServerState:
+    """Per-server state for Windows feature extraction (STEP 4)"""
     
-    Maintains state across events to compute:
-    - Event frequency and rate metrics
-    - Error pattern detection
-    - HRESULT code clustering
-    - Error cascade indicators
-    - Service health transitions
-    - Temporal anomaly signals
-    
-    Features are designed for ML-based anomaly detection.
-    Output: Dict[str, float] with 50+ numeric features.
-    """
-
-    # Singleton instance for state preservation across requests
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(WindowsFeatureExtractor, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
-    def __init__(self):
-        """Initialize feature extractor with state tracking"""
-        if self._initialized:
-            return
-
+    def __init__(self, max_queue_size: int = 1000):
+        """Initialize per-server state tracking"""
         # Event frequency tracking
+        self.event_timestamp_queue: deque = deque(maxlen=max_queue_size)
         self.event_type_counts: Dict[str, int] = defaultdict(int)
-        self.component_counts: Dict[str, int] = defaultdict(int)
-        self.status_counts: Dict[str, int] = defaultdict(int)
-
+        
         # Error tracking
-        self.error_codes: deque = deque(maxlen=100)  # Last 100 errors
+        self.error_codes: deque = deque(maxlen=100)
         self.error_hresults: Dict[str, int] = defaultdict(int)
         self.error_names: Dict[str, int] = defaultdict(int)
         self.consecutive_errors: int = 0
         self.max_consecutive_errors: int = 0
-
-        # Event-level tracking
+        
+        # Event-level counts
         self.total_events: int = 0
         self.total_errors: int = 0
         self.total_failures: int = 0
-
+        
         # Transaction tracking
-        self.active_transactions: Dict[str, float] = {}  # handle -> timestamp
+        self.active_transactions: Dict[str, datetime] = {}
         self.transaction_handles: deque = deque(maxlen=50)
         self.transaction_success_count: int = 0
         self.transaction_failure_count: int = 0
-
+        
         # Package tracking
-        self.packages_seen: Set[str] = set()
+        self.packages_seen: set = set()
         self.package_errors: Dict[str, int] = defaultdict(int)
-
+        
         # Session tracking
-        self.active_sessions: Set[str] = set()
+        self.active_sessions: set = set()
         self.session_events: Dict[str, int] = defaultdict(int)
-
+        
         # Service state tracking
-        self.service_state: str = "unknown"  # "running", "initializing", "stopped"
-        self.service_startup_time: Optional[float] = None
+        self.service_state: str = "unknown"
+        self.service_startup_time: Optional[datetime] = None
         self.service_state_transitions: int = 0
+        
+        # Component tracking
+        self.component_counts: Dict[str, int] = defaultdict(int)
+        self.component_error_counts: Dict[str, int] = defaultdict(int)
+        
+        # Temporal state
+        self.last_event_time: Optional[datetime] = None
 
-        # Temporal windows (time-based in seconds)
-        self.time_windows: Dict[str, deque] = {
-            "5m": deque(maxlen=300),  # Events in last 5 minutes
-            "10m": deque(maxlen=600),
-            "1h": deque(maxlen=3600),
-        }
 
-        # Cache for feature computation
-        self.last_event_time: Optional[float] = None
-        self.time_since_last_event: float = 0.0
-
-        # Anomaly indicators
-        self.error_spike_indicator: float = 0.0
-        self.cascade_indicator: float = 0.0
-        self.package_stress_indicator: float = 0.0
-
-        self._initialized = True
-
-    def extract(self, log_internal: LogInternal) -> Dict[str, float]:
+class WindowsFeatureExtractor:
+    """
+    Stateful feature extractor for Windows event logs (STEP 4 design).
+    
+    Per-server state isolation:
+    - Maintains separate state for each server (sid)
+    - Uses log_internal.timestamp (not datetime.now())
+    - Returns fixed 12-element feature vector
+    - All features normalized to [0, 1]
+    """
+    
+    # Time windows (in seconds)
+    WINDOW_5M = 300
+    WINDOW_10M = 600
+    WINDOW_1H = 3600
+    
+    # Normalization constants
+    MAX_EVENT_TYPE = 16  # WindowsEventTypeCode.UNKNOWN
+    MAX_TEMPLATE_ID = 100
+    MAX_HRESULT_BUCKET = 10
+    MAX_CONSECUTIVE_ERRORS = 20
+    
+    def __init__(self, max_queue_size: int = 1000):
         """
-        Extract features from a single parsed event.
-
+        Initialize the feature extractor.
+        
         Args:
-            log_internal: LogInternal object with metadata["parsed"]
-
-        Returns:
-            Dictionary of numeric features suitable for ML models
+            max_queue_size: Maximum size for per-server event queues
         """
-        # Get parsed event
-        parsed = log_internal.metadata.get("parsed", {})
-        if not parsed:
-            return self._get_baseline_features()
+        self.max_queue_size = max_queue_size
+        # Per-server state storage: sid -> WindowsServerState
+        self.server_states: Dict[str, WindowsServerState] = {}
+    
+    def _get_or_create_server_state(self, sid: str) -> WindowsServerState:
+        """Get or create state for a specific server"""
+        if sid not in self.server_states:
+            self.server_states[sid] = WindowsServerState(self.max_queue_size)
+        return self.server_states[sid]
 
-        # Update state
-        self._update_state(parsed)
-
-        # Compute features
-        features = {}
-
-        # Basic frequency features
-        features.update(self._extract_frequency_features())
-
-        # Error pattern features
-        features.update(self._extract_error_features())
-
-        # Transaction features
-        features.update(self._extract_transaction_features())
-
-        # Package features
-        features.update(self._extract_package_features())
-
-        # Service features
-        features.update(self._extract_service_features())
-
-        # Session features
-        features.update(self._extract_session_features())
-
-        # Temporal features
-        features.update(self._extract_temporal_features())
-
-        # Anomaly indicators
-        features.update(self._extract_anomaly_features())
-
+    def extract(self, log_internal: LogInternal) -> List[float]:
+        """
+        Extract 12-element feature vector from a LogInternal object.
+        
+        STEP 4 Interface:
+        - Uses log_internal.sid for per-server state
+        - Uses log_internal.timestamp (NOT datetime.now())
+        - Returns List[float] with exactly 12 normalized values
+        
+        Args:
+            log_internal: LogInternal object with parsed data in metadata["parsed"]
+            
+        Returns:
+            List of 12 floats, each in [0, 1] range
+        """
+        # Extract parsed data from metadata
+        parsed_log = (
+            log_internal.metadata.get("parsed", {})
+            if log_internal.metadata
+            else {}
+        )
+        
+        # Get per-server state
+        state = self._get_or_create_server_state(log_internal.sid)
+        
+        # Use log timestamp (NOT datetime.now())
+        log_time = log_internal.timestamp
+        
+        # Update server state with current event
+        self._update_server_state(parsed_log, state, log_time)
+        
+        # Compute 12-element feature vector
+        features = self._compute_feature_vector(parsed_log, state, log_time)
+        
+        # Verify constraints
+        assert len(features) == 12, f"Expected 12 features, got {len(features)}"
+        assert all(isinstance(f, (int, float)) for f in features), "All features must be numeric"
+        assert all(0 <= f <= 1 for f in features), f"All features must be in [0, 1], got {features}"
+        
         return features
 
+    
     # ============================================================================
     # STATE UPDATE
     # ============================================================================
-
-    def _update_state(self, parsed: Dict[str, Any]) -> None:
-        """Update internal state with new event"""
-        self.total_events += 1
-
-        event_type = parsed.get("event_type", "unknown")
-        component = parsed.get("component", "unknown")
-        status = parsed.get("status", "info")
-
+    
+    def _update_server_state(
+        self,
+        parsed_log: Dict[str, Any],
+        state: WindowsServerState,
+        log_time: datetime
+    ) -> None:
+        """
+        Update per-server state with current event.
+        
+        Args:
+            parsed_log: Dictionary with event data
+            state: WindowsServerState for this server
+            log_time: Timestamp from log (NOT datetime.now())
+        """
+        state.total_events += 1
+        
+        event_type = parsed_log.get("event_type", "unknown")
+        component = parsed_log.get("component", "unknown")
+        status = parsed_log.get("status", "info")
+        
         # Update counters
-        self.event_type_counts[event_type] += 1
-        self.component_counts[component] += 1
-        self.status_counts[status] += 1
-
+        state.event_type_counts[event_type] += 1
+        state.component_counts[component] += 1
+        state.event_timestamp_queue.append(log_time)
+        state.last_event_time = log_time
+        
         # Update error tracking
         if status in ["failure", "error", "warning"]:
-            self.total_errors += 1
-            self.consecutive_errors += 1
-            self.max_consecutive_errors = max(
-                self.max_consecutive_errors, self.consecutive_errors
+            state.total_errors += 1
+            state.consecutive_errors += 1
+            state.max_consecutive_errors = max(
+                state.max_consecutive_errors, state.consecutive_errors
             )
-
-            hresult = parsed.get("hresult")
-            error_name = parsed.get("error_name")
+            
+            hresult = parsed_log.get("hresult")
+            error_name = parsed_log.get("error_name")
             if hresult:
-                self.error_hresults[hresult] += 1
+                state.error_hresults[hresult] += 1
             if error_name:
-                self.error_names[error_name] += 1
-                self.error_codes.append(error_name)
-
+                state.error_names[error_name] += 1
+                state.error_codes.append(error_name)
+            
             if status == "failure":
-                self.total_failures += 1
+                state.total_failures += 1
+            
+            if component and component != "unknown":
+                state.component_error_counts[component] += 1
         else:
-            self.consecutive_errors = 0
-
+            state.consecutive_errors = 0
+        
         # Update transaction tracking
         if event_type == "transaction_create":
-            handle = parsed.get("handle")
+            handle = parsed_log.get("handle")
             if handle:
-                self.active_transactions[handle] = datetime.now().timestamp()
-                self.transaction_handles.append(handle)
+                state.active_transactions[handle] = log_time
+                state.transaction_handles.append(handle)
                 if status == "success":
-                    self.transaction_success_count += 1
+                    state.transaction_success_count += 1
                 else:
-                    self.transaction_failure_count += 1
-
+                    state.transaction_failure_count += 1
+        
         # Update package tracking
         if "package" in event_type:
-            pkg_name = parsed.get("package_name", "unknown")
-            self.packages_seen.add(pkg_name)
+            pkg_name = parsed_log.get("package_name", "unknown")
+            state.packages_seen.add(pkg_name)
             if status in ["failure", "error"]:
-                self.package_errors[pkg_name] += 1
-
+                state.package_errors[pkg_name] += 1
+        
         # Update session tracking
         if "session" in event_type:
-            session_id = parsed.get("session_id", "unknown")
+            session_id = parsed_log.get("session_id", "unknown")
             if "initialized" in event_type:
-                self.active_sessions.add(session_id)
+                state.active_sessions.add(session_id)
             elif "destroyed" in event_type:
-                self.active_sessions.discard(session_id)
-            self.session_events[session_id] += 1
-
+                state.active_sessions.discard(session_id)
+            state.session_events[session_id] += 1
+        
         # Update service state
         if event_type == "service_start":
-            self.service_state = "running"
-            self.service_startup_time = datetime.now().timestamp()
-            self.service_state_transitions += 1
+            state.service_state = "running"
+            state.service_startup_time = log_time
+            state.service_state_transitions += 1
         elif event_type == "service_stop":
-            self.service_state = "stopped"
-            self.service_state_transitions += 1
+            state.service_state = "stopped"
+            state.service_state_transitions += 1
         elif event_type == "service_init":
-            self.service_state = "initializing"
+            state.service_state = "initializing"
 
-        # Update temporal windows
-        now = datetime.now().timestamp()
-        self.last_event_time = now
-
+    
     # ============================================================================
-    # FEATURE EXTRACTION METHODS
+    # FEATURE COMPUTATION
     # ============================================================================
-
-    def _extract_frequency_features(self) -> Dict[str, float]:
-        """Basic event frequency features"""
-        features = {}
-
-        # Event type frequencies
-        features["event_count_total"] = float(self.total_events)
-        features["event_count_service_start"] = float(
-            self.event_type_counts["service_start"]
-        )
-        features["event_count_service_stop"] = float(
-            self.event_type_counts["service_stop"]
-        )
-        features["event_count_transaction_create"] = float(
-            self.event_type_counts["transaction_create"]
-        )
-        features["event_count_package_applicability"] = float(
-            self.event_type_counts["package_applicability"]
-        )
-        features["event_count_session_initialized"] = float(
-            self.event_type_counts["session_initialized"]
-        )
-        features["event_count_upload_error"] = float(
-            self.event_type_counts["upload_error"]
-        )
-
-        # Component frequencies
-        features["component_count_cbs"] = float(self.component_counts["CBS"])
-        features["component_count_csi"] = float(self.component_counts["CSI"])
-
-        # Status frequencies
-        features["status_count_success"] = float(self.status_counts["success"])
-        features["status_count_failure"] = float(self.status_counts["failure"])
-        features["status_count_info"] = float(self.status_counts["info"])
-
+    
+    def _compute_feature_vector(
+        self,
+        parsed_log: Dict[str, Any],
+        state: WindowsServerState,
+        log_time: datetime
+    ) -> List[float]:
+        """
+        Compute 12-element normalized feature vector.
+        
+        FEATURE ORDER (must match specification):
+        0. event_type_code (1-16, normalized to 0-1)
+        1. template_id_normalized (0-1)
+        2. error_rate_5m (0-1)
+        3. transaction_failure_rate (0-1)
+        4. error_cascade_indicator (0-1)
+        5. hresult_code_bucket (0-1)
+        6. service_health_transition (0-1)
+        7. package_install_failure_rate (0-1)
+        8. is_error_flag (0 or 1)
+        9. consecutive_errors_normalized (0-1)
+        10. temporal_irregularity (0-1)
+        11. overall_anomaly_score (0-1)
+        """
+        event_type = parsed_log.get("event_type", "unknown")
+        component = parsed_log.get("component", "unknown")
+        status = parsed_log.get("status", "info")
+        template_id = parsed_log.get("template_id", 0)
+        
+        features = []
+        
+        # Feature 0: event_type_code (1-16, normalized to 0-1)
+        event_code = self._encode_event_type(event_type)
+        feature_0 = float(event_code) / self.MAX_EVENT_TYPE
+        features.append(min(feature_0, 1.0))
+        
+        # Feature 1: template_id_normalized (0-1)
+        feature_1 = min(float(template_id), self.MAX_TEMPLATE_ID) / self.MAX_TEMPLATE_ID
+        features.append(feature_1)
+        
+        # Feature 2: error_rate_5m (0-1)
+        feature_2 = self._compute_error_rate_5m(state, log_time)
+        features.append(feature_2)
+        
+        # Feature 3: transaction_failure_rate (0-1)
+        feature_3 = self._compute_transaction_failure_rate(state)
+        features.append(feature_3)
+        
+        # Feature 4: error_cascade_indicator (0-1)
+        feature_4 = self._compute_error_cascade(state)
+        features.append(feature_4)
+        
+        # Feature 5: hresult_code_bucket (0-1)
+        feature_5 = self._compute_hresult_bucket(state)
+        features.append(feature_5)
+        
+        # Feature 6: service_health_transition (0-1)
+        feature_6 = self._compute_service_health_transition(state)
+        features.append(feature_6)
+        
+        # Feature 7: package_install_failure_rate (0-1)
+        feature_7 = self._compute_package_failure_rate(state)
+        features.append(feature_7)
+        
+        # Feature 8: is_error_flag (0 or 1)
+        feature_8 = 1.0 if status in ["failure", "error", "warning"] else 0.0
+        features.append(feature_8)
+        
+        # Feature 9: consecutive_errors_normalized (0-1)
+        feature_9 = self._compute_consecutive_errors_normalized(state)
+        features.append(feature_9)
+        
+        # Feature 10: temporal_irregularity (0-1)
+        feature_10 = self._compute_temporal_irregularity(state, log_time)
+        features.append(feature_10)
+        
+        # Feature 11: overall_anomaly_score (0-1)
+        feature_11 = self._compute_overall_anomaly_score(features)
+        features.append(feature_11)
+        
         return features
-
-    def _extract_error_features(self) -> Dict[str, float]:
-        """Error pattern and classification features"""
-        features = {}
-
-        # Error counts
-        features["error_count_total"] = float(self.total_errors)
-        features["error_count_failures"] = float(self.total_failures)
-        features["error_rate"] = (
-            self.total_errors / max(self.total_events, 1)
-        ) if self.total_events > 0 else 0.0
-
-        # Error cascade tracking
-        features["error_consecutive_max"] = float(self.max_consecutive_errors)
-        features["error_cascade_indicator"] = (
-            1.0 if self.max_consecutive_errors >= 5 else 0.0
-        )
-
-        # HRESULT code distribution
-        features["hresult_unique_count"] = float(len(self.error_hresults))
-        features["hresult_concentration"] = (
-            max(self.error_hresults.values()) / max(self.total_errors, 1)
-        ) if self.total_errors > 0 else 0.0
-
-        # Error name distribution
-        features["error_name_unique_count"] = float(len(self.error_names))
-
-        # Most common error
-        if self.error_names:
-            most_common_error = max(
-                self.error_names.items(), key=lambda x: x[1]
-            )[1]
-            features["error_name_max_frequency"] = float(most_common_error)
-        else:
-            features["error_name_max_frequency"] = 0.0
-
-        # Manifest errors
-        features["error_count_manifest"] = float(
-            self.event_type_counts["manifest_error"]
-        )
-
-        # Package errors
-        features["error_count_package"] = float(
-            self.event_type_counts["package_error"]
-        )
-
-        # Parse errors
-        features["error_count_parse"] = float(
-            self.event_type_counts["parse_error"]
-        )
-
-        return features
-
-    def _extract_transaction_features(self) -> Dict[str, float]:
-        """Transaction management features"""
-        features = {}
-
-        features["transaction_count_total"] = float(
-            len(self.transaction_handles)
-        )
-        features["transaction_count_success"] = float(
-            self.transaction_success_count
-        )
-        features["transaction_count_failure"] = float(
-            self.transaction_failure_count
-        )
-        features["transaction_active_count"] = float(
-            len(self.active_transactions)
-        )
-
-        # Transaction success rate
-        total_transactions = (
-            self.transaction_success_count + self.transaction_failure_count
-        )
-        if total_transactions > 0:
-            features["transaction_success_rate"] = (
-                self.transaction_success_count / total_transactions
-            )
-        else:
-            features["transaction_success_rate"] = 0.0
-
-        # Transaction failure clustering
-        if self.transaction_failure_count > 0:
-            features["transaction_failure_clustering"] = (
-                self.transaction_failure_count / max(total_transactions, 1)
-            )
-        else:
-            features["transaction_failure_clustering"] = 0.0
-
-        return features
-
-    def _extract_package_features(self) -> Dict[str, float]:
-        """Package operation features"""
-        features = {}
-
-        features["package_count_unique"] = float(len(self.packages_seen))
-        features["package_count_applicability"] = float(
-            self.event_type_counts["package_applicability"]
-        )
-        features["package_count_errors"] = float(
-            sum(self.package_errors.values())
-        )
-        features["package_error_rate"] = (
-            sum(self.package_errors.values())
-            / (
-                max(
-                    self.event_type_counts["package_applicability"]
-                    + self.event_type_counts["package_error"],
-                    1,
-                )
-            )
-        )
-
-        # Package stress indicator
-        if len(self.packages_seen) > 0 and any(self.package_errors.values()):
-            max_errors = max(self.package_errors.values())
-            features["package_max_error_count"] = float(max_errors)
-        else:
-            features["package_max_error_count"] = 0.0
-
-        return features
-
-    def _extract_service_features(self) -> Dict[str, float]:
-        """Service lifecycle and state features"""
-        features = {}
-
-        # Service state encoding
-        state_map = {"running": 1.0, "initializing": 0.5, "stopped": 0.0, "unknown": -1.0}
-        features["service_state"] = state_map.get(self.service_state, -1.0)
-
-        # Service transitions
-        features["service_transition_count"] = float(self.service_state_transitions)
-
-        # Service uptime
-        if self.service_startup_time:
-            uptime = datetime.now().timestamp() - self.service_startup_time
-            features["service_uptime_seconds"] = max(uptime, 0.0)
-        else:
-            features["service_uptime_seconds"] = 0.0
-
-        return features
-
-    def _extract_session_features(self) -> Dict[str, float]:
-        """Session management features"""
-        features = {}
-
-        features["session_count_active"] = float(len(self.active_sessions))
-        features["session_count_created"] = float(
-            self.event_type_counts["session_initialized"]
-        )
-        features["session_count_unique"] = float(len(self.session_events))
-
-        # Session density
-        if self.session_count_unique > 0:
-            features["session_events_per_session"] = (
-                self.total_events
-                / len(self.session_events)
-            )
-        else:
-            features["session_events_per_session"] = 0.0
-
-        return features
-
-    def _extract_temporal_features(self) -> Dict[str, float]:
-        """Time-window based features"""
-        features = {}
-
-        # Note: Time windows not fully populated in this simplified version
-        # In production, would track events with timestamps and compute
-        # moving averages, rates, etc.
-
-        features["event_recency_seconds"] = (
-            0.0 if self.last_event_time is None else
-            datetime.now().timestamp() - self.last_event_time
-        )
-
-        return features
-
-    def _extract_anomaly_features(self) -> Dict[str, float]:
-        """High-level anomaly indicators"""
-        features = {}
-
-        # Error spike detection
-        if self.total_events > 10:
-            error_spike = self.total_errors / max(self.total_events, 1)
-            features["anomaly_error_spike"] = (
-                1.0 if error_spike > 0.3 else 0.0
-            )
-        else:
-            features["anomaly_error_spike"] = 0.0
-
-        # Error cascade (5+ consecutive errors)
-        features["anomaly_error_cascade"] = (
-            1.0 if self.max_consecutive_errors >= 5 else 0.0
-        )
-
-        # Package stress (multiple packages with errors)
-        features["anomaly_package_stress"] = (
-            1.0
-            if len(self.package_errors) > 0
-            and sum(self.package_errors.values()) > 5
-            else 0.0
-        )
-
-        # Service instability (multiple transitions)
-        features["anomaly_service_instability"] = (
-            1.0 if self.service_state_transitions > 3 else 0.0
-        )
-
-        # Composite anomaly score (0.0-1.0)
-        anomaly_signals = [
-            features["anomaly_error_spike"],
-            features["anomaly_error_cascade"],
-            features["anomaly_package_stress"],
-            features["anomaly_service_instability"],
-        ]
-        features["anomaly_score"] = sum(anomaly_signals) / len(anomaly_signals)
-
-        return features
-
+    
     # ============================================================================
-    # UTILITY METHODS
+    # HELPER COMPUTATION METHODS
     # ============================================================================
-
-    def _get_baseline_features(self) -> Dict[str, float]:
-        """Return baseline/missing feature vector"""
-        return {
-            "event_count_total": 0.0,
-            "error_count_total": 0.0,
-            "error_rate": 0.0,
-            "anomaly_score": 0.0,
+    
+    def _encode_event_type(self, event_type: str) -> int:
+        """Encode event type string to numeric code"""
+        mapping = {
+            "service_start": WindowsEventTypeCode.SERVICE_START,
+            "service_stop": WindowsEventTypeCode.SERVICE_STOP,
+            "transaction_create": WindowsEventTypeCode.TRANSACTION_CREATE,
+            "transaction_close": WindowsEventTypeCode.TRANSACTION_CLOSE,
+            "package_applicability": WindowsEventTypeCode.PACKAGE_APPLICABILITY,
+            "package_error": WindowsEventTypeCode.PACKAGE_ERROR,
+            "session_initialized": WindowsEventTypeCode.SESSION_INITIALIZED,
+            "session_destroyed": WindowsEventTypeCode.SESSION_DESTROYED,
+            "manifest_error": WindowsEventTypeCode.MANIFEST_ERROR,
+            "parse_error": WindowsEventTypeCode.PARSE_ERROR,
+            "upload_error": WindowsEventTypeCode.UPLOAD_ERROR,
+            "crypt_error": WindowsEventTypeCode.CRYPT_ERROR,
+            "registry_error": WindowsEventTypeCode.REGISTRY_ERROR,
+            "file_error": WindowsEventTypeCode.FILE_ERROR,
+            "hresult_error": WindowsEventTypeCode.HRESULT_ERROR,
         }
-
-    def reset_state(self) -> None:
-        """Reset all state (for testing or new dataset)"""
-        self.__init__()
-        self._initialized = False
-
-
-# Singleton factory
-def get_windows_feature_extractor() -> WindowsFeatureExtractor:
-    """Get or create Windows feature extractor instance"""
-    return WindowsFeatureExtractor()
+        return mapping.get(event_type, WindowsEventTypeCode.UNKNOWN)
+    
+    def _compute_error_rate_5m(self, state: WindowsServerState, log_time: datetime) -> float:
+        """Compute error rate in 5-minute window"""
+        window_start = log_time - timedelta(seconds=self.WINDOW_5M)
+        
+        # Count total events in window
+        total_events_5m = sum(1 for ts in state.event_timestamp_queue if ts >= window_start)
+        if total_events_5m == 0:
+            return 0.0
+        
+        # Count errors in window (approximate using total error count)
+        error_count = state.total_errors
+        rate = min(float(error_count) / (total_events_5m + 1), 1.0)
+        return rate
+    
+    def _compute_transaction_failure_rate(self, state: WindowsServerState) -> float:
+        """Compute transaction failure rate"""
+        total_transactions = (
+            state.transaction_success_count + state.transaction_failure_count
+        )
+        if total_transactions == 0:
+            return 0.0
+        
+        rate = float(state.transaction_failure_count) / total_transactions
+        return min(rate, 1.0)
+    
+    def _compute_error_cascade(self, state: WindowsServerState) -> float:
+        """Compute error cascade indicator (5+ consecutive errors)"""
+        if state.max_consecutive_errors >= 5:
+            # Normalize cascade intensity
+            normalized = min(
+                float(state.max_consecutive_errors) / self.MAX_CONSECUTIVE_ERRORS,
+                1.0
+            )
+            return normalized
+        return 0.0
+    
+    def _compute_hresult_bucket(self, state: WindowsServerState) -> float:
+        """Compute HRESULT code bucket diversity"""
+        if state.total_errors == 0:
+            return 0.0
+        
+        unique_hresults = len(state.error_hresults)
+        # Normalize: more hresult codes = higher anomaly
+        normalized = min(
+            float(unique_hresults) / self.MAX_HRESULT_BUCKET,
+            1.0
+        )
+        return normalized
+    
+    def _compute_service_health_transition(self, state: WindowsServerState) -> float:
+        """Compute service health transition score"""
+        if state.service_state_transitions > 3:
+            # Multiple transitions indicate instability
+            normalized = min(
+                float(state.service_state_transitions) / 6.0,
+                1.0
+            )
+            return normalized
+        return 0.0
+    
+    def _compute_package_failure_rate(self, state: WindowsServerState) -> float:
+        """Compute package install failure rate"""
+        total_package_events = (
+            state.event_type_counts.get("package_applicability", 0) +
+            state.event_type_counts.get("package_error", 0)
+        )
+        
+        if total_package_events == 0:
+            return 0.0
+        
+        failure_count = sum(state.package_errors.values())
+        rate = float(failure_count) / (total_package_events + 1)
+        return min(rate, 1.0)
+    
+    def _compute_consecutive_errors_normalized(self, state: WindowsServerState) -> float:
+        """Compute normalized consecutive errors"""
+        normalized = min(
+            float(state.consecutive_errors) / self.MAX_CONSECUTIVE_ERRORS,
+            1.0
+        )
+        return normalized
+    
+    def _compute_temporal_irregularity(self, state: WindowsServerState, log_time: datetime) -> float:
+        """Compute temporal irregularity based on event timing"""
+        if state.last_event_time is None or len(state.event_timestamp_queue) < 2:
+            return 0.0
+        
+        # Very recent event is less irregular
+        time_since_last = (log_time - state.last_event_time).total_seconds()
+        
+        # If more than 1 hour, indicate irregularity
+        if time_since_last > self.WINDOW_1H:
+            return 1.0
+        elif time_since_last > self.WINDOW_10M:
+            return 0.5
+        else:
+            return 0.0
+    
+    def _compute_overall_anomaly_score(self, features: List[float]) -> float:
+        """
+        Compute overall anomaly score from individual features.
+        
+        Weights anomalies from cascade, error rate, and transitions.
+        """
+        # Use select high-value features for anomaly computation
+        # Feature 2: error_rate_5m
+        # Feature 4: error_cascade_indicator
+        # Feature 6: service_health_transition
+        # Feature 7: package_failure_rate
+        # Feature 9: consecutive_errors_normalized
+        
+        anomaly_features = [
+            features[2],   # error_rate_5m
+            features[4],   # error_cascade_indicator
+            features[6],   # service_health_transition
+            features[7],   # package_failure_rate
+            features[9],   # consecutive_errors_normalized
+        ]
+        
+        # Average the anomaly signals
+        if not anomaly_features:
+            return 0.0
+        
+        overall = sum(anomaly_features) / len(anomaly_features)
+        return min(overall, 1.0)

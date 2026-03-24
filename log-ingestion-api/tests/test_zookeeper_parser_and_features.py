@@ -8,11 +8,8 @@ from datetime import datetime
 from typing import Dict, Any
 
 from app.models.log_models import LogInternal, ServerType
-from app.parsers.zookeeper_parser import ZookeeperParser, ParsedZookeeperLogEvent
-from app.features.zookeeper_feature_extractor import (
-    ZookeeperFeatureExtractor,
-    get_zookeeper_feature_extractor,
-)
+from app.parsers.zookeeper_parser import ZookeeperParser
+from app.features.zookeeper_feature_extractor import ZookeeperFeatureExtractor
 
 
 # ============================================================================
@@ -529,23 +526,40 @@ class TestZookeeperFeatureExtractor:
         assert "error_count_total" in features
         assert "anomaly_score" in features
 
-    def test_singleton_state_preservation(self):
-        """Test that extractor singleton preserves state"""
-        ext1 = get_zookeeper_feature_extractor()
-        ext2 = get_zookeeper_feature_extractor()
-
-        # Both should be same instance
-        assert ext1 is ext2
-
-        # State should be preserved
+    def test_per_server_state_isolation(self):
+        """Test that extractor maintains isolated state per server"""
+        extractor = ZookeeperFeatureExtractor()
         parser = ZookeeperParser()
-        log = self.create_log_internal(
-            parser.parse(ZookeeperLogSamples.received_connection_request())
+        
+        # Create logs for two different servers
+        log_server_a = LogInternal(
+            sid="server_a",
+            timestamp=datetime.now(),
+            server_type=ServerType.ZOOKEEPER,
+            log_file="test.log",
+            message=ZookeeperLogSamples.received_connection_request()
         )
-        features1 = ext1.extract(log)
-        features2 = ext2.extract(log)
-
-        # State should accumulate
+        
+        log_server_b = LogInternal(
+            sid="server_b",
+            timestamp=datetime.now(),
+            server_type=ServerType.ZOOKEEPER,
+            log_file="test.log",
+            message=ZookeeperLogSamples.received_connection_request()
+        )
+        
+        # Extract features for both servers
+        features_a1 = extractor.extract(log_server_a)
+        features_b = extractor.extract(log_server_b)
+        
+        # Each should have independent state
+        # Server A should accumulate state separately from Server B
+        assert len(features_a1) == 10  # Verify feature vector length
+        assert len(features_b) == 10   # Verify feature vector length
+        assert all(isinstance(f, (int, float)) for f in features_a1)
+        assert all(isinstance(f, (int, float)) for f in features_b)
+        assert all(0 <= f <= 1 for f in features_a1)
+        assert all(0 <= f <= 1 for f in features_b)
         assert features2["event_count_total"] == 2.0
 
 

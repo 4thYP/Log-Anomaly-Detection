@@ -1,10 +1,10 @@
 """
-Stateful feature extractor for Linux logs.
-Tracks behavioral patterns and temporal features for anomaly detection.
+STEP 4: Stateful feature extractor for Linux logs.
+Tracks per-server behavioral patterns with fixed 14-element feature vectors.
 """
 
 from collections import defaultdict, deque
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from enum import IntEnum
 
@@ -32,523 +32,481 @@ class EventTypeCode(IntEnum):
     UNKNOWN = 19
 
 
+class LinuxServerState:
+    """Per-server state for Linux feature extraction (STEP 4)"""
+    
+    def __init__(self, max_queue_size: int = 1000):
+        """Initialize per-server state tracking"""
+        # Event frequency tracking
+        self.event_timestamp_queue: deque = deque(maxlen=max_queue_size)
+        self.event_type_counts: Dict[str, int] = defaultdict(int)
+        
+        # IP tracking
+        self.ip_last_seen: Dict[str, datetime] = {}
+        self.ip_failure_counts: Dict[str, int] = defaultdict(int)
+        self.ip_failure_streaks: Dict[str, int] = defaultdict(int)
+        self.ip_first_seen: Dict[str, datetime] = {}
+        self.ip_total_events: Dict[str, int] = defaultdict(int)
+        self.ip_ftp_connections: Dict[str, int] = defaultdict(int)
+        self.ip_event_queue: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_queue_size))
+        
+        # User tracking
+        self.user_first_seen: Dict[str, datetime] = {}
+        self.user_event_counts: Dict[str, int] = defaultdict(int)
+        self.user_failure_counts: Dict[str, int] = defaultdict(int)
+        self.user_success_counts: Dict[str, int] = defaultdict(int)
+        
+        # Session tracking
+        self.active_sessions: Dict[str, datetime] = {}
+        self.session_durations: List[float] = []
+        
+        # Component tracking
+        self.component_event_counts: Dict[str, int] = defaultdict(int)
+        self.component_error_counts: Dict[str, int] = defaultdict(int)
+        
+        # Temporal state
+        self.last_event_time: Optional[datetime] = None
+        self.event_intervals: deque = deque(maxlen=100)
+        
+        # Global counts for this server
+        self.total_events_seen: int = 0
+        self.total_auth_failures: int = 0
+        self.total_ftp_events: int = 0
+
+
 class LinuxFeatureExtractor:
     """
-    Stateful feature extractor for Linux logs.
+    Stateful feature extractor for Linux logs (STEP 4 design).
     
-    Maintains temporal windows and entity tracking for:
-    - Authentication failures and checks
-    - FTP connections and timeouts
-    - Session management
-    - IP-based attack indicators
-    - User-based anomalies
+    Per-server state isolation:
+    - Maintains separate state for each server (sid)
+    - Uses log_internal.timestamp (not datetime.now())
+    - Returns fixed 14-element feature vector
+    - All features normalized to [0, 1]
     """
 
     # Time windows (in seconds)
     WINDOW_5M = 300
     WINDOW_10M = 600
     WINDOW_1H = 3600
+    
+    # Normalization constants
+    MAX_EVENT_TYPE = 19  # EventTypeCode.UNKNOWN
+    MAX_TEMPLATE_ID = 50
+    MAX_IPS_IN_WINDOW = 100
+    MAX_FAILURE_STREAK = 20
+    MAX_FTP_BURST = 20
+    MAX_COMPONENT_ANOMALY = 10
 
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 1000):
         """
         Initialize the feature extractor.
         
         Args:
-            max_queue_size: Maximum size for event queues (for memory management)
+            max_queue_size: Maximum size for per-server event queues
         """
         self.max_queue_size = max_queue_size
-        self.current_timestamp = None
+        # Per-server state storage: sid -> LinuxServerState
+        self.server_states: Dict[str, LinuxServerState] = {}
 
-        # === Event Type Tracking ===
-        self.event_counts = defaultdict(int)  # Total count per event type
-        self.event_queue = deque(maxlen=max_queue_size)  # All events with timestamps
+    def _get_or_create_server_state(self, sid: str) -> LinuxServerState:
+        """Get or create state for a specific server"""
+        if sid not in self.server_states:
+            self.server_states[sid] = LinuxServerState(self.max_queue_size)
+        return self.server_states[sid]
 
-        # === IP-based Tracking ===
-        self.ip_event_queue = defaultdict(
-            lambda: deque(maxlen=max_queue_size)
-        )  # Events per IP
-        self.ip_first_seen = {}  # Timestamp of first IP occurrence
-        self.ip_auth_failures = defaultdict(int)  # Total auth failures per IP
-        self.ip_ftp_connections = defaultdict(int)  # Total FTP connections per IP
-        self.ip_session_count = defaultdict(int)  # Active sessions per IP
-
-        # === User-based Tracking ===
-        self.user_event_queue = defaultdict(
-            lambda: deque(maxlen=max_queue_size)
-        )  # Events per user
-        self.user_first_seen = {}  # Timestamp of first user
-        self.user_active_sessions = set()  # Set of users with open sessions
-        self.user_auth_failures = defaultdict(int)  # Total failures per user
-        self.user_successful_logins = defaultdict(int)  # Total successful sessions
-
-        # === Component-based Tracking ===
-        self.component_event_queue = defaultdict(
-            lambda: deque(maxlen=max_queue_size)
-        )  # Events per component
-
-        # === Session Tracking ===
-        self.active_sessions = {}  # {user: timestamp_opened}
-        self.session_durations = []  # List of session durations
-
-        # === Failure Streak Tracking ===
-        self.ip_failure_streak = defaultdict(int)  # Consecutive failures per IP
-        self.ip_last_success_time = {}  # Last successful event per IP
-
-        # === Global Statistics ===
-        self.unique_ips_seen = set()
-        self.unique_users_seen = set()
-        self.total_auth_failures = 0
-        self.total_ftp_events = 0
-
-    def extract(self, log_internal: Any) -> Dict[str, Any]:
+    def extract(self, log_internal: Any) -> List[float]:
         """
-        Extract features from a LogInternal object.
+        Extract 14-element feature vector from a LogInternal object.
         
-        Interface method that extracts parsed data from metadata and calls extract_features.
+        STEP 4 Interface:
+        - Uses log_internal.sid for per-server state
+        - Uses log_internal.timestamp (NOT datetime.now())
+        - Returns List[float] with exactly 14 normalized values
         
         Args:
             log_internal: LogInternal object with parsed data in metadata["parsed"]
             
         Returns:
-            Dictionary with numeric features for ML models
+            List of 14 floats, each in [0, 1] range
         """
-        # Extract the parsed data from metadata
-        parsed_log = log_internal.metadata.get("parsed", {}) if log_internal.metadata else {}
+        # Extract parsed data from metadata
+        parsed_log = (
+            log_internal.metadata.get("parsed", {}) 
+            if log_internal.metadata 
+            else {}
+        )
         
-        # Update timestamp from log
-        if hasattr(log_internal, 'timestamp'):
-            self.current_timestamp = log_internal.timestamp
+        # Get per-server state
+        state = self._get_or_create_server_state(log_internal.sid)
         
-        return self._extract_features(parsed_log)
+        # Use log timestamp (NOT datetime.now())
+        log_time = log_internal.timestamp
+        
+        # Update server state with current event
+        self._update_server_state(parsed_log, state, log_time)
+        
+        # Compute 14-element feature vector
+        features = self._compute_feature_vector(parsed_log, state, log_time)
+        
+        # Verify constraints
+        assert len(features) == 14, f"Expected 14 features, got {len(features)}"
+        assert all(isinstance(f, (int, float)) for f in features), "All features must be numeric"
+        assert all(0 <= f <= 1 for f in features), f"All features must be in [0, 1], got {features}"
+        
+        return features
 
-    def _extract_features(self, parsed_log: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_server_state(
+        self,
+        parsed_log: Dict[str, Any],
+        state: LinuxServerState,
+        log_time: datetime
+    ) -> None:
         """
-        Extract features from a parsed log event.
-        
-        Updates internal state and returns feature vector.
+        Update per-server state with current event.
         
         Args:
-            parsed_log: Dictionary from LinuxParser.parse()
-            
-        Returns:
-            Dictionary with numeric features for ML models
+            parsed_log: Dictionary with keys event_type, ip, user, component, status
+            state: LinuxServerState for this server
+            log_time: Timestamp from log (NOT datetime.now())
         """
-        # Extract metadata
         event_type = parsed_log.get("event_type", "unknown")
-        component = parsed_log.get("component", "unknown")
-        user = parsed_log.get("user")
         ip = parsed_log.get("ip")
+        user = parsed_log.get("user")
+        component = parsed_log.get("component", "unknown")
         status = parsed_log.get("status")
-        timestamp = self.current_timestamp or datetime.now()
-
-        # Update current timestamp
-        self.current_timestamp = timestamp
-
-        # === Update Global State ===
-        self._update_global_state(event_type, parsed_log, timestamp)
-        self._update_ip_state(ip, event_type, status, timestamp)
-        self._update_user_state(user, event_type, status, timestamp)
-        self._update_component_state(component, event_type, timestamp)
-        self._update_session_state(user, event_type, timestamp)
-
-        # === Extract Features ===
-        features = {
-            "event_type_code": self._encode_event_type(event_type),
-            "component_code": self._encode_component(component),
-        }
-
-        # Time-window features (5min, 10min)
-        features.update(self._extract_temporal_features(timestamp))
-
-        # IP-based features
-        if ip:
-            features.update(self._extract_ip_features(ip, timestamp))
-
-        # User-based features
-        if user:
-            features.update(self._extract_user_features(user, timestamp))
-
-        # Session-based features
-        features.update(self._extract_session_features(timestamp))
-
-        # Event status features
-        features.update(self._extract_status_features(
-            event_type, status, ip, user
-        ))
-
-        # Anomaly indicators
-        features.update(self._extract_anomaly_indicators(
-            event_type, ip, user, timestamp
-        ))
-
-        return features
-
-    # ============================================================================
-    # STATE UPDATE METHODS
-    # ============================================================================
-
-    def _update_global_state(
-        self, event_type: str, parsed_log: Dict[str, Any], timestamp: datetime
-    ) -> None:
-        """Update global event tracking"""
-        self.event_counts[event_type] += 1
-        self.event_queue.append((timestamp, event_type, parsed_log))
-
-        # Track auth failures and FTP
+        
+        # Update global counts
+        state.total_events_seen += 1
+        state.event_type_counts[event_type] += 1
+        state.event_timestamp_queue.append(log_time)
+        state.last_event_time = log_time
+        
+        # Track auth failures and FTP events
         if event_type == "auth_failure":
-            self.total_auth_failures += 1
+            state.total_auth_failures += 1
         elif event_type in ["ftp_connect", "ftp_timeout", "ftp_login"]:
-            self.total_ftp_events += 1
-
-    def _update_ip_state(
-        self, ip: Optional[str], event_type: str, status: Optional[str],
-        timestamp: datetime
-    ) -> None:
-        """Update IP-based state tracking"""
-        if not ip:
-            return
-
-        # Track first occurrence
-        if ip not in self.ip_first_seen:
-            self.ip_first_seen[ip] = timestamp
-            self.unique_ips_seen.add(ip)
-
-        # Add to IP event queue
-        self.ip_event_queue[ip].append((timestamp, event_type))
-
-        # Track auth failures and successes
-        if event_type == "auth_failure":
-            self.ip_auth_failures[ip] += 1
-            self.ip_failure_streak[ip] += 1
-        elif event_type in ["session_opened", "ftp_login"]:
-            self.ip_failure_streak[ip] = 0  # Reset streak on success
-            self.ip_last_success_time[ip] = timestamp
-
-        # Track FTP connections
-        if event_type in ["ftp_connect", "ftp_timeout", "ftp_login"]:
-            self.ip_ftp_connections[ip] += 1
-
-        # Track sessions
-        if event_type == "session_opened":
-            self.ip_session_count[ip] += 1
-        elif event_type == "session_closed":
-            self.ip_session_count[ip] = max(0, self.ip_session_count[ip] - 1)
-
-    def _update_user_state(
-        self, user: Optional[str], event_type: str, status: Optional[str],
-        timestamp: datetime
-    ) -> None:
-        """Update user-based state tracking"""
-        if not user:
-            return
-
-        # Track first occurrence
-        if user not in self.user_first_seen:
-            self.user_first_seen[user] = timestamp
-            self.unique_users_seen.add(user)
-
-        # Add to user event queue
-        self.user_event_queue[user].append((timestamp, event_type))
-
-        # Track authentication
-        if event_type == "auth_failure":
-            self.user_auth_failures[user] += 1
-        elif event_type == "session_opened":
-            self.user_successful_logins[user] += 1
-
-    def _update_component_state(
-        self, component: str, event_type: str, timestamp: datetime
-    ) -> None:
-        """Update component-based state tracking"""
-        if component and component != "unknown":
-            self.component_event_queue[component].append((timestamp, event_type))
-
-    def _update_session_state(
-        self, user: Optional[str], event_type: str, timestamp: datetime
-    ) -> None:
-        """Update session state (open/close tracking)"""
-        if not user:
-            return
-
-        if event_type == "session_opened":
-            self.active_sessions[user] = timestamp
-            self.user_active_sessions.add(user)
-        elif event_type == "session_closed":
-            if user in self.active_sessions:
-                duration = (
-                    timestamp - self.active_sessions[user]
-                ).total_seconds()
-                self.session_durations.append(duration)
-                del self.active_sessions[user]
-                self.user_active_sessions.discard(user)
-
-    # ============================================================================
-    # FEATURE EXTRACTION METHODS
-    # ============================================================================
-
-    def _extract_temporal_features(self, timestamp: datetime) -> Dict[str, float]:
-        """Extract time-window based features"""
-        features = {}
-
-        # Count events in sliding windows
-        window_5m_start = timestamp - timedelta(seconds=self.WINDOW_5M)
-        window_10m_start = timestamp - timedelta(seconds=self.WINDOW_10M)
-        window_1h_start = timestamp - timedelta(seconds=self.WINDOW_1H)
-
-        auth_failures_5m = 0
-        auth_failures_10m = 0
-        ftp_events_5m = 0
-        ftp_events_10m = 0
-        event_count_5m = 0
-        event_count_10m = 0
-
-        for ts, event_type, _ in self.event_queue:
-            if ts >= window_5m_start:
-                event_count_5m += 1
-                if event_type == "auth_failure":
-                    auth_failures_5m += 1
-                elif event_type in ["ftp_connect", "ftp_timeout", "ftp_login"]:
-                    ftp_events_5m += 1
-
-            if ts >= window_10m_start:
-                event_count_10m += 1
-                if event_type == "auth_failure":
-                    auth_failures_10m += 1
-                elif event_type in ["ftp_connect", "ftp_timeout", "ftp_login"]:
-                    ftp_events_10m += 1
-
-        features["auth_failures_5m"] = float(auth_failures_5m)
-        features["auth_failures_10m"] = float(auth_failures_10m)
-        features["ftp_events_5m"] = float(ftp_events_5m)
-        features["ftp_events_10m"] = float(ftp_events_10m)
-        features["event_count_5m"] = float(event_count_5m)
-        features["event_count_10m"] = float(event_count_10m)
-
-        # Rates
-        features["auth_failure_rate_5m"] = (
-            auth_failures_5m / event_count_5m if event_count_5m > 0 else 0.0
-        )
-        features["ftp_event_rate_5m"] = (
-            ftp_events_5m / event_count_5m if event_count_5m > 0 else 0.0
-        )
-
-        return features
-
-    def _extract_ip_features(self, ip: str, timestamp: datetime) -> Dict[str, float]:
-        """Extract IP-based behavioral features"""
-        features = {}
-
-        # Time since first seen
-        if ip in self.ip_first_seen:
-            age_seconds = (timestamp - self.ip_first_seen[ip]).total_seconds()
-            features["ip_age_seconds"] = float(age_seconds)
-            features["is_new_ip"] = 1.0 if age_seconds < 60 else 0.0
-        else:
-            features["ip_age_seconds"] = 0.0
-            features["is_new_ip"] = 1.0
-
-        # Frequency in time windows
-        window_5m_start = timestamp - timedelta(seconds=self.WINDOW_5M)
-        window_10m_start = timestamp - timedelta(seconds=self.WINDOW_10M)
-
-        ip_events_5m = sum(
-            1 for ts, _ in self.ip_event_queue[ip]
-            if ts >= window_5m_start
-        )
-        ip_events_10m = sum(
-            1 for ts, _ in self.ip_event_queue[ip]
-            if ts >= window_10m_start
-        )
-
-        features["ip_events_5m"] = float(ip_events_5m)
-        features["ip_events_10m"] = float(ip_events_10m)
-
-        # Failure metrics
-        features["ip_total_auth_failures"] = float(self.ip_auth_failures[ip])
-        features["ip_failure_streak"] = float(self.ip_failure_streak[ip])
-        features["ip_ftp_connections"] = float(self.ip_ftp_connections[ip])
-        features["ip_active_sessions"] = float(self.ip_session_count[ip])
-
-        # Failure rate
-        total_ip_events = len(self.ip_event_queue[ip])
-        features["ip_failure_rate"] = (
-            self.ip_auth_failures[ip] / total_ip_events
-            if total_ip_events > 0
-            else 0.0
-        )
-
-        return features
-
-    def _extract_user_features(self, user: str, timestamp: datetime) -> Dict[str, float]:
-        """Extract user-based behavioral features"""
-        features = {}
-
-        # Time since first seen
-        if user in self.user_first_seen:
-            age_seconds = (timestamp - self.user_first_seen[user]).total_seconds()
-            features["user_age_seconds"] = float(age_seconds)
-            features["is_new_user"] = 1.0 if age_seconds < 60 else 0.0
-        else:
-            features["user_age_seconds"] = 0.0
-            features["is_new_user"] = 1.0
-
-        # Frequency in time windows
-        window_5m_start = timestamp - timedelta(seconds=self.WINDOW_5M)
-        window_10m_start = timestamp - timedelta(seconds=self.WINDOW_10M)
-
-        user_events_5m = sum(
-            1 for ts, _ in self.user_event_queue[user]
-            if ts >= window_5m_start
-        )
-        user_events_10m = sum(
-            1 for ts, _ in self.user_event_queue[user]
-            if ts >= window_10m_start
-        )
-
-        features["user_events_5m"] = float(user_events_5m)
-        features["user_events_10m"] = float(user_events_10m)
-
-        # Auth metrics
-        features["user_auth_failures"] = float(self.user_auth_failures[user])
-        features["user_successful_logins"] = float(self.user_successful_logins[user])
-
-        # Login success rate
-        total_user_auth_attempts = (
-            self.user_auth_failures[user] + self.user_successful_logins[user]
-        )
-        features["user_success_rate"] = (
-            self.user_successful_logins[user] / total_user_auth_attempts
-            if total_user_auth_attempts > 0
-            else 0.0
-        )
-
-        return features
-
-    def _extract_session_features(self, timestamp: datetime) -> Dict[str, float]:
-        """Extract session-based features"""
-        features = {}
-
-        # Current active sessions
-        features["active_session_count"] = float(len(self.active_sessions))
-        features["unique_users_with_sessions"] = float(
-            len(self.user_active_sessions)
-        )
-
-        # Session duration statistics
-        if self.session_durations:
-            avg_session_duration = sum(self.session_durations) / len(
-                self.session_durations
-            )
-            max_session_duration = max(self.session_durations)
-            features["avg_session_duration"] = float(avg_session_duration)
-            features["max_session_duration"] = float(max_session_duration)
-        else:
-            features["avg_session_duration"] = 0.0
-            features["max_session_duration"] = 0.0
-
-        return features
-
-    def _extract_status_features(
-        self, event_type: str, status: Optional[str], ip: Optional[str],
-        user: Optional[str]
-    ) -> Dict[str, float]:
-        """Extract status-based features"""
-        features = {}
-
-        # Event type specific status
-        if event_type == "auth_failure":
-            features["is_auth_failure"] = 1.0
-            features["auth_failure_from_new_ip"] = (
-                1.0 if ip and ip not in self.ip_first_seen else 0.0
-            )
-            features["auth_failure_from_new_user"] = (
-                1.0 if user and user not in self.user_first_seen else 0.0
-            )
-        else:
-            features["is_auth_failure"] = 0.0
-            features["auth_failure_from_new_ip"] = 0.0
-            features["auth_failure_from_new_user"] = 0.0
-
-        if event_type == "ftp_timeout":
-            features["is_ftp_timeout"] = 1.0
-        else:
-            features["is_ftp_timeout"] = 0.0
-
-        if event_type == "session_opened":
-            features["is_session_open"] = 1.0
-        elif event_type == "session_closed":
-            features["is_session_close"] = 1.0
-        else:
-            features["is_session_open"] = 0.0
-            features["is_session_close"] = 0.0
-
-        return features
-
-    def _extract_anomaly_indicators(
-        self, event_type: str, ip: Optional[str], user: Optional[str],
-        timestamp: datetime
-    ) -> Dict[str, float]:
-        """Extract anomaly score indicators"""
-        features = {}
-
-        anomaly_score = 0.0
-
-        # Indicator 1: High failure streak from IP
-        if ip and self.ip_failure_streak[ip] >= 5:
-            anomaly_score += 0.2
-            features["ip_high_failure_streak"] = 1.0
-        else:
-            features["ip_high_failure_streak"] = 0.0
-
-        # Indicator 2: Multiple new IPs in short time
-        if len(self.unique_ips_seen) > 10:
-            features["multiple_new_ips"] = 1.0
-            anomaly_score += 0.15
-        else:
-            features["multiple_new_ips"] = 0.0
-
-        # Indicator 3: Burst of FTP connections
+            state.total_ftp_events += 1
+        
+        # Update IP state
         if ip:
-            window_5m_start = timestamp - timedelta(seconds=self.WINDOW_5M)
-            ftp_burst = sum(
-                1 for ts, et in self.ip_event_queue[ip]
-                if ts >= window_5m_start and et in ["ftp_connect", "ftp_timeout", "ftp_login"]
-            )
-            if ftp_burst > 5:
-                features["ftp_burst_detected"] = 1.0
-                anomaly_score += 0.25
-            else:
-                features["ftp_burst_detected"] = 0.0
-        else:
-            features["ftp_burst_detected"] = 0.0
+            if ip not in state.ip_first_seen:
+                state.ip_first_seen[ip] = log_time
+            state.ip_last_seen[ip] = log_time
+            state.ip_total_events[ip] += 1
+            state.ip_event_queue[ip].append((log_time, event_type))
+            
+            if event_type == "auth_failure":
+                state.ip_failure_counts[ip] += 1
+                state.ip_failure_streaks[ip] += 1
+            elif event_type in ["session_opened", "ftp_login"]:
+                state.ip_failure_streaks[ip] = 0  # Reset streak on success
+            
+            if event_type in ["ftp_connect", "ftp_timeout", "ftp_login"]:
+                state.ip_ftp_connections[ip] += 1
+        
+        # Update user state
+        if user:
+            if user not in state.user_first_seen:
+                state.user_first_seen[user] = log_time
+            state.user_event_counts[user] += 1
+            
+            if event_type == "auth_failure":
+                state.user_failure_counts[user] += 1
+            elif event_type in ["session_opened", "ftp_login"]:
+                state.user_success_counts[user] += 1
+        
+        # Update session state
+        if user:
+            if event_type == "session_opened":
+                state.active_sessions[user] = log_time
+            elif event_type == "session_closed" and user in state.active_sessions:
+                duration = (log_time - state.active_sessions[user]).total_seconds()
+                state.session_durations.append(duration)
+                del state.active_sessions[user]
+        
+        # Update component state
+        if component and component != "unknown":
+            state.component_event_counts[component] += 1
+            if event_type in ["auth_failure", "alert", "error"]:
+                state.component_error_counts[component] += 1
+        
+        # Update temporal intervals
+        if state.last_event_time and len(state.event_timestamp_queue) > 1:
+            prev_time = state.event_timestamp_queue[-2] if len(state.event_timestamp_queue) > 1 else None
+            if prev_time:
+                interval = (log_time - prev_time).total_seconds()
+                if interval > 0:
+                    state.event_intervals.append(interval)
 
-        # Indicator 4: Low user success rate
-        if user and self.user_auth_failures[user] > 2:
-            total = self.user_auth_failures[user] + self.user_successful_logins[user]
-            success_rate = self.user_successful_logins[user] / total if total > 0 else 0
-            if success_rate < 0.2:
-                features["user_low_success_rate"] = 1.0
-                anomaly_score += 0.15
-            else:
-                features["user_low_success_rate"] = 0.0
-        else:
-            features["user_low_success_rate"] = 0.0
-
-        # Indicator 5: High frequency of failures
-        window_10m_start = timestamp - timedelta(seconds=self.WINDOW_10M)
-        recent_failures = sum(
-            1 for ts, et, _ in self.event_queue
-            if ts >= window_10m_start and et == "auth_failure"
-        )
-        if recent_failures > 10:
-            features["high_failure_frequency"] = 1.0
-            anomaly_score += 0.25
-        else:
-            features["high_failure_frequency"] = 0.0
-
-        features["anomaly_score"] = min(anomaly_score, 1.0)
-
+    def _compute_feature_vector(
+        self,
+        parsed_log: Dict[str, Any],
+        state: LinuxServerState,
+        log_time: datetime
+    ) -> List[float]:
+        """
+        Compute 14-element normalized feature vector.
+        
+        FEATURE ORDER (must match specification):
+        0. event_type_code
+        1. template_id_normalized
+        2. auth_failure_rate_5m
+        3. unique_ips_5m
+        4. ip_failure_streak
+        5. ftp_connection_burst
+        6. session_anomaly_score
+        7. error_event_density
+        8. is_auth_failure_flag
+        9. is_new_ip_flag
+        10. auth_burst_detected
+        11. component_anomaly
+        12. temporal_entropy
+        13. overall_anomaly_score
+        """
+        event_type = parsed_log.get("event_type", "unknown")
+        ip = parsed_log.get("ip")
+        user = parsed_log.get("user")
+        component = parsed_log.get("component", "unknown")
+        status = parsed_log.get("status")
+        template_id = parsed_log.get("template_id", 0)
+        
+        features = []
+        
+        # Feature 0: event_type_code (1-19, normalized to 0-1)
+        event_code = self._encode_event_type(event_type)
+        feature_0 = float(event_code) / self.MAX_EVENT_TYPE
+        features.append(min(feature_0, 1.0))
+        
+        # Feature 1: template_id_normalized (0-1)
+        feature_1 = min(float(template_id), self.MAX_TEMPLATE_ID) / self.MAX_TEMPLATE_ID
+        features.append(feature_1)
+        
+        # Feature 2: auth_failure_rate_5m (0-1)
+        feature_2 = self._compute_auth_failure_rate_5m(state, log_time)
+        features.append(feature_2)
+        
+        # Feature 3: unique_ips_5m (0-1, normalized count)
+        feature_3 = self._compute_unique_ips_5m(state, log_time)
+        features.append(feature_3)
+        
+        # Feature 4: ip_failure_streak (0-1)
+        feature_4 = self._compute_ip_failure_streak(ip, state)
+        features.append(feature_4)
+        
+        # Feature 5: ftp_connection_burst (0-1)
+        feature_5 = self._compute_ftp_burst(ip, state, log_time)
+        features.append(feature_5)
+        
+        # Feature 6: session_anomaly_score (0-1)
+        feature_6 = self._compute_session_anomaly(state, log_time)
+        features.append(feature_6)
+        
+        # Feature 7: error_event_density (0-1)
+        feature_7 = self._compute_error_density_5m(state, log_time)
+        features.append(feature_7)
+        
+        # Feature 8: is_auth_failure_flag (0 or 1)
+        feature_8 = 1.0 if event_type == "auth_failure" else 0.0
+        features.append(feature_8)
+        
+        # Feature 9: is_new_ip_flag (0 or 1)
+        feature_9 = self._compute_is_new_ip(ip, state, log_time)
+        features.append(feature_9)
+        
+        # Feature 10: auth_burst_detected (0-1)
+        feature_10 = self._compute_auth_burst(state, log_time)
+        features.append(feature_10)
+        
+        # Feature 11: component_anomaly (0-1)
+        feature_11 = self._compute_component_anomaly(component, state)
+        features.append(feature_11)
+        
+        # Feature 12: temporal_entropy (0-1)
+        feature_12 = self._compute_temporal_entropy(state)
+        features.append(feature_12)
+        
+        # Feature 13: overall_anomaly_score (0-1)
+        feature_13 = self._compute_overall_anomaly_score(features)
+        features.append(feature_13)
+        
         return features
+
+    # ============================================================================
+    # FEATURE COMPUTATION METHODS
+    # ============================================================================
+
+    def _compute_auth_failure_rate_5m(self, state: LinuxServerState, log_time: datetime) -> float:
+        """Compute auth failure rate in 5-minute window"""
+        window_start = log_time - timedelta(seconds=self.WINDOW_5M)
+        
+        # Count total events and auth failures in window
+        total_events_5m = sum(1 for ts in state.event_timestamp_queue if ts >= window_start)
+        if total_events_5m == 0:
+            return 0.0
+        
+        # Count auth failures (approximate using stored count)
+        auth_failures_5m = state.event_type_counts.get("auth_failure", 0)
+        rate = min(float(auth_failures_5m) / total_events_5m, 1.0)
+        return rate
+
+    def _compute_unique_ips_5m(self, state: LinuxServerState, log_time: datetime) -> float:
+        """Compute normalized count of unique IPs in 5-minute window"""
+        window_start = log_time - timedelta(seconds=self.WINDOW_5M)
+        
+        unique_ips = set()
+        for ip, events_queue in state.ip_event_queue.items():
+            for ts, _ in events_queue:
+                if ts >= window_start:
+                    unique_ips.add(ip)
+                    break
+        
+        count = len(unique_ips)
+        normalized = min(float(count) / self.MAX_IPS_IN_WINDOW, 1.0)
+        return normalized
+
+    def _compute_ip_failure_streak(self, ip: Optional[str], state: LinuxServerState) -> float:
+        """Compute normalized IP failure streak"""
+        if not ip or ip not in state.ip_failure_streaks:
+            return 0.0
+        
+        streak = state.ip_failure_streaks[ip]
+        normalized = min(float(streak) / self.MAX_FAILURE_STREAK, 1.0)
+        return normalized
+
+    def _compute_ftp_burst(self, ip: Optional[str], state: LinuxServerState, log_time: datetime) -> float:
+        """Compute FTP connection burst indicator (rapid connections)"""
+        if not ip:
+            return 0.0
+        
+        window_start = log_time - timedelta(seconds=self.WINDOW_5M)
+        
+        ftp_count = sum(
+            1 for ts, et in state.ip_event_queue[ip]
+            if ts >= window_start and et in ["ftp_connect", "ftp_timeout", "ftp_login"]
+        )
+        
+        normalized = min(float(ftp_count) / self.MAX_FTP_BURST, 1.0)
+        return normalized
+
+    def _compute_session_anomaly(self, state: LinuxServerState, log_time: datetime) -> float:
+        """Compute session anomaly score"""
+        if not state.session_durations:
+            return 0.0
+        
+        avg_duration = sum(state.session_durations) / len(state.session_durations)
+        
+        # Anomaly if unusually short or long
+        if avg_duration < 10:  # Very short session
+            return 1.0
+        elif avg_duration > 7200:  # Very long session (> 2 hours)
+            return 0.5
+        else:
+            return 0.0
+
+    def _compute_error_density_5m(self, state: LinuxServerState, log_time: datetime) -> float:
+        """Compute error event density in 5-minute window"""
+        window_start = log_time - timedelta(seconds=self.WINDOW_5M)
+        
+        total_events_5m = sum(1 for ts in state.event_timestamp_queue if ts >= window_start)
+        error_events = (
+            state.event_type_counts.get("auth_failure", 0) +
+            state.event_type_counts.get("alert", 0)
+        )
+        
+        if total_events_5m == 0:
+            return 0.0
+        
+        density = min(float(error_events) / total_events_5m, 1.0)
+        return density
+
+    def _compute_is_new_ip(self, ip: Optional[str], state: LinuxServerState, log_time: datetime) -> float:
+        """Check if IP is newly seen"""
+        if not ip:
+            return 0.0
+        
+        if ip not in state.ip_first_seen:
+            return 1.0
+        
+        age_seconds = (log_time - state.ip_first_seen[ip]).total_seconds()
+        return 1.0 if age_seconds < 60 else 0.0
+
+    def _compute_auth_burst(self, state: LinuxServerState, log_time: datetime) -> float:
+        """Compute auth failure burst detection"""
+        # Detect burst: more than 3 failures total
+        if state.total_auth_failures > 3:
+            burst = min(float(state.total_auth_failures) / 10.0, 1.0)
+            return burst
+        
+        return 0.0
+
+    def _compute_component_anomaly(self, component: str, state: LinuxServerState) -> float:
+        """Compute component-level anomaly score"""
+        if not component or component == "unknown":
+            return 0.0
+        
+        total_component_events = state.component_event_counts.get(component, 0)
+        error_events = state.component_error_counts.get(component, 0)
+        
+        if total_component_events == 0:
+            return 0.0
+        
+        error_rate = float(error_events) / total_component_events
+        normalized = min(error_rate * 2, 1.0)  # Scale up sensitivity
+        return normalized
+
+    def _compute_temporal_entropy(self, state: LinuxServerState) -> float:
+        """Compute temporal entropy (randomness/chaos of event intervals)"""
+        if not state.event_intervals or len(state.event_intervals) < 2:
+            return 0.0
+        
+        # Calculate coefficient of variation
+        intervals = list(state.event_intervals)
+        mean_interval = sum(intervals) / len(intervals)
+        
+        if mean_interval == 0:
+            return 0.0
+        
+        variance = sum((x - mean_interval) ** 2 for x in intervals) / len(intervals)
+        std_dev = variance ** 0.5
+        cv = std_dev / mean_interval if mean_interval > 0 else 0.0
+        
+        # Normalize: entropy = min(cv, 2.0) / 2.0
+        entropy = min(cv / 2.0, 1.0)
+        return entropy
+
+    def _compute_overall_anomaly_score(self, features: List[float]) -> float:
+        """
+        Compute overall anomaly score from first 13 features.
+        
+        Weighted sum based on importance:
+        - auth failures (high)
+        - IP reputation/failure metrics (high)
+        - temporal anomalies (medium)
+        - component/session metrics (low)
+        """
+        if len(features) < 13:
+            return 0.0
+        
+        # Weighted sum of features 0-12
+        weights = [
+            0.05,  # 0: event_type_code
+            0.02,  # 1: template_id_normalized
+            0.15,  # 2: auth_failure_rate_5m
+            0.10,  # 3: unique_ips_5m
+            0.15,  # 4: ip_failure_streak
+            0.12,  # 5: ftp_connection_burst
+            0.08,  # 6: session_anomaly_score
+            0.12,  # 7: error_event_density
+            0.10,  # 8: is_auth_failure_flag
+            0.08,  # 9: is_new_ip_flag
+            0.12,  # 10: auth_burst_detected
+            0.08,  # 11: component_anomaly
+            0.06,  # 12: temporal_entropy
+        ]
+        
+        score = sum(f * w for f, w in zip(features[:13], weights))
+        return min(score, 1.0)
 
     # ============================================================================
     # UTILITY ENCODING METHODS
@@ -591,19 +549,3 @@ class LinuxFeatureExtractor:
             "unknown": 0,
         }
         return mapping.get(component, 0)
-
-    # ============================================================================
-    # STATE INSPECTION (DEBUGGING)
-    # ============================================================================
-
-    def get_state_summary(self) -> Dict[str, Any]:
-        """Return summary of current internal state (for debugging)"""
-        return {
-            "total_events": len(self.event_queue),
-            "unique_ips": len(self.unique_ips_seen),
-            "unique_users": len(self.unique_users_seen),
-            "active_sessions": len(self.active_sessions),
-            "total_auth_failures": self.total_auth_failures,
-            "total_ftp_events": self.total_ftp_events,
-            "event_type_counts": dict(self.event_counts),
-        }
