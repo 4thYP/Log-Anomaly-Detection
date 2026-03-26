@@ -1312,10 +1312,10 @@ class ZookeeperParser(BaseParser):
             "follower_info": EventGroup.QUORUM.value,
             
             # Data/snapshot events
-            "getting_snapshot": EventGroup.SYSTEM_INFO.value,
-            "reading_snapshot": EventGroup.SYSTEM_INFO.value,
-            "snapshotting": EventGroup.SYSTEM_INFO.value,
-            "end_of_stream": EventGroup.SYSTEM_INFO.value,
+            "getting_snapshot": EventGroup.SYSTEM.value,
+            "reading_snapshot": EventGroup.SYSTEM.value,
+            "snapshotting": EventGroup.SYSTEM.value,
+            "end_of_stream": EventGroup.SYSTEM.value,
             
             # Error events
             "session_exception": EventGroup.ERROR.value,
@@ -1324,11 +1324,11 @@ class ZookeeperParser(BaseParser):
             "keeper_exception": EventGroup.ERROR.value,
             
             # Configuration/system events
-            "config_param": EventGroup.SYSTEM_INFO.value,
-            "server_environment": EventGroup.SYSTEM_INFO.value,
-            "shutdown_complete": EventGroup.SYSTEM_INFO.value,
-            "starting_quorum_peer": EventGroup.SYSTEM_INFO.value,
-            "generic": EventGroup.SYSTEM_INFO.value,
+            "config_param": EventGroup.SYSTEM.value,
+            "server_environment": EventGroup.SYSTEM.value,
+            "shutdown_complete": EventGroup.SYSTEM.value,
+            "starting_quorum_peer": EventGroup.SYSTEM.value,
+            "generic": EventGroup.SYSTEM.value,
         }
         return event_group_map.get(event_type, EventGroup.UNKNOWN.value)
 

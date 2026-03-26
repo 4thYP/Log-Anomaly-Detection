@@ -1,15 +1,13 @@
 from fastapi import Request
 from app.models.log_models import LogCreate, LogInternal
 from app.repositories.log_repository import LogRepository
-from app.parsers.log_parser import LogParser
 from app.parsers.parser_factory import ParserFactory
 from app.features.feature_extractor_factory import FeatureExtractorFactory
-from app.sequences.sequence_builder import SequenceBuilder
+# from app.sequences.sequence_builder import SequenceBuilder
 
 class LogService:
     def __init__(self, repository: LogRepository):
         self.repository = repository
-        self.sequence_builder = SequenceBuilder(sequence_length=5)
 
     async def create_log(self, log_data: LogCreate) -> LogInternal:
         # Business logic for creating a log.
