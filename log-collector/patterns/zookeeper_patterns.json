@@ -1,0 +1,1762 @@
+{
+  "server": "zookeeper",
+  "templates": {
+    "by_frequency": {
+      "******* GOODBYE /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e ********": 19,
+      "Accepted socket connection from /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 48,
+      "Cannot open channel to \u003c*\u003e at election address /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 86,
+      "Client attempting to establish new session at /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 41,
+      "Client attempting to renew session \u003c*\u003e at /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 3,
+      "Closed socket connection for client /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e (no session established for client)": 4,
+      "Closed socket connection for client /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e which had sessionid \u003c*\u003e": 44,
+      "Connection broken for id \u003c*\u003e, my id = \u003c*\u003e, error =": 291,
+      "Connection request from old client /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e; will be dropped if server is in r-o mode": 39,
+      "Established session \u003c*\u003e with negotiated timeout \u003c*\u003e for client /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 50,
+      "Exception causing close of session \u003c*\u003e due to java.io.IOException: ZooKeeperServer not running": 3,
+      "Expiring session \u003c*\u003e, timeout of 10000ms exceeded": 38,
+      "Expiring session \u003c*\u003e, timeout of 20000ms exceeded": 2,
+      "FOLLOWING": 2,
+      "FOLLOWING - LEADER ELECTION TOOK - \u003c*\u003e": 2,
+      "First is \u003c*\u003e": 1,
+      "Getting a snapshot from leader": 2,
+      "Have quorum of supporters; starting up and setting last processed zxid: \u003c*\u003e": 1,
+      "Have smaller server identifier, so dropping the connection: (\u003c*\u003e, \u003c*\u003e)": 1,
+      "Interrupted while waiting for message on queue": 314,
+      "Interrupting SendWorker": 266,
+      "LOOKING": 4,
+      "My election bind port: \u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e/\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 1,
+      "New election. My id =  \u003c*\u003e, proposed zxid=\u003c*\u003e": 1,
+      "Notification time out: \u003c*\u003e": 37,
+      "Notification: \u003c*\u003e (n.leader), \u003c*\u003e (n.zxid), \u003c*\u003e (n.round), FOLLOWING (n.state), \u003c*\u003e (n.sid), \u003c*\u003e (n.peerEPoch), FOLLOWING (my state)": 1,
+      "Notification: \u003c*\u003e (n.leader), \u003c*\u003e (n.zxid), \u003c*\u003e (n.round), LEADING (n.state), \u003c*\u003e (n.sid), \u003c*\u003e (n.peerEPoch), LOOKING (my state)": 1,
+      "Notification: \u003c*\u003e (n.leader), \u003c*\u003e (n.zxid), \u003c*\u003e (n.round), LOOKING (n.state), \u003c*\u003e (n.sid), \u003c*\u003e (n.peerEPoch), FOLLOWING (my state)": 1,
+      "Notification: \u003c*\u003e (n.leader), \u003c*\u003e (n.zxid), \u003c*\u003e (n.round), LOOKING (n.state), \u003c*\u003e (n.sid), \u003c*\u003e (n.peerEPoch), LEADING (my state)": 3,
+      "Notification: \u003c*\u003e (n.leader), \u003c*\u003e (n.zxid), \u003c*\u003e (n.round), LOOKING (n.state), \u003c*\u003e (n.sid), \u003c*\u003e (n.peerEPoch), LOOKING (my state)": 5,
+      "Processed session termination for sessionid: \u003c*\u003e": 47,
+      "Reading snapshot /var/lib/zookeeper/version-\u003c*\u003e/snapshot.b00000084": 1,
+      "Received connection request /\u003c*\u003e.\u003c*\u003e.\u003c*\u003e.\u003c*\u003e:\u003c*\u003e": 299,
+      "Revalidating client: \u003c*\u003e": 3,
+      "Send worker leaving thread": 262,
+      "Sending DIFF": 1,
+      "Server environment:java.home=/usr/lib/jvm/java-\u003c*\u003e-openjdk-amd64/jre": 1,
+      "Server environment:java.vendor=Oracle Corporation": 2,
+      "Server environment:os.name=Linux": 2,
+      "Server environment:user.dir=/": 1,
+      "Server environment:user.name=zookeeper": 2,
+      "Server environment:zookeeper.version=\u003c*\u003e.\u003c*\u003e.\u003c*\u003e--\u003c*\u003e, built on \u003c*\u003e/\u003c*\u003e/\u003c*\u003e \u003c*\u003e:\u003c*\u003e GMT": 1,
+      "Snapshotting: \u003c*\u003e to /var/lib/zookeeper/version-\u003c*\u003e/snapshot.300000dcd": 1,
+      "Snapshotting: \u003c*\u003e to /var/lib/zookeeper/version-\u003c*\u003e/snapshot.50000062e": 1,
+      "Unexpected exception causing shutdown while sock still open": 12,
+      "autopurge.purgeInterval set to \u003c*\u003e": 3,
+      "autopurge.snapRetainCount set to \u003c*\u003e": 1,
+      "caught end of stream exception": 37,
+      "minSessionTimeout set to -\u003c*\u003e": 2,
+      "tickTime set to \u003c*\u003e": 1
+    },
+    "total_templates": 59
+  },
+  "components": {
+    "by_frequency": {
+      "/10.10.34.11:3888:QuorumCnxManager$Listener@493": 98,
+      "/10.10.34.12:3888:QuorumCnxManager$Listener@493": 95,
+      "/10.10.34.13:3888:QuorumCnxManager$Listener@493": 106,
+      "CommitProcessor:1:NIOServerCnxn@180": 1,
+      "CommitProcessor:1:ZooKeeperServer@595": 17,
+      "CommitProcessor:2:ZooKeeperServer@595": 18,
+      "CommitProcessor:3:ZooKeeperServer@595": 13,
+      "LearnerHandler-/10.10.34.11:32976:LearnerHandler@395": 1,
+      "LearnerHandler-/10.10.34.11:49928:Leader@598": 1,
+      "LearnerHandler-/10.10.34.11:52225:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52241:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52264:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52265:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52273:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52308:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52419:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52476:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52502:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52703:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52814:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.11:52818:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52844:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.11:52855:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.12:35276:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59060:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59103:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59203:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59211:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59406:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.12:59455:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.12:59480:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.13:42241:Leader@576": 1,
+      "LearnerHandler-/10.10.34.13:57247:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:57319:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:57354:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.13:57438:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.13:57458:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:57502:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:57580:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:57617:LearnerHandler@562": 1,
+      "LearnerHandler-/10.10.34.13:57653:LearnerHandler@575": 1,
+      "LearnerHandler-/10.10.34.13:59348:LearnerHandler@263": 1,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:Learner@107": 3,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001": 48,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@349": 37,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@354": 3,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197": 48,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793": 39,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@832": 3,
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839": 41,
+      "ProcessThread(sid:1 cport:-1)::PrepRequestProcessor@476": 7,
+      "ProcessThread(sid:2 cport:-1)::PrepRequestProcessor@476": 39,
+      "ProcessThread(sid:2 cport:-1)::PrepRequestProcessor@627": 1,
+      "ProcessThread(sid:3 cport:-1)::PrepRequestProcessor@476": 1,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:Environment@100": 6,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@740": 1,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774": 37,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:Follower@63": 2,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368": 79,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumPeer@670": 2,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumPeer@738": 1,
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:ZooKeeperServer@595": 2,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Environment@100": 2,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:FileTxnSnapLog@240": 2,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:FinalRequestProcessor@415": 1,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:Learner@325": 1,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368": 1,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:QuorumPeer@670": 1,
+      "QuorumPeer[myid=2]/0:0:0:0:0:0:0:0:2181:QuorumPeer@738": 1,
+      "QuorumPeer[myid=3]/0:0:0:0:0:0:0:0:2181:Environment@100": 3,
+      "QuorumPeer[myid=3]/0:0:0:0:0:0:0:0:2181:Learner@325": 1,
+      "QuorumPeer[myid=3]/0:0:0:0:0:0:0:0:2181:QuorumPeer@670": 1,
+      "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762": 289,
+      "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@765": 265,
+      "RecvWorker:1:QuorumCnxManager$RecvWorker@762": 1,
+      "RecvWorker:3:QuorumCnxManager$RecvWorker@762": 1,
+      "RecvWorker:3:QuorumCnxManager$RecvWorker@765": 1,
+      "SendWorker:188978561024:QuorumCnxManager$SendWorker@679": 313,
+      "SendWorker:188978561024:QuorumCnxManager$SendWorker@688": 261,
+      "SendWorker:1:QuorumCnxManager$SendWorker@679": 1,
+      "SendWorker:3:QuorumCnxManager$SendWorker@688": 1,
+      "SessionTracker:ZooKeeperServer@325": 40,
+      "Thread-1:QuorumCnxManager$Listener@486": 1,
+      "WorkerReceiver[myid=1]:FastLeaderElection@542": 3,
+      "WorkerReceiver[myid=2]:FastLeaderElection@542": 4,
+      "WorkerReceiver[myid=3]:FastLeaderElection@542": 5,
+      "WorkerSender[myid=1]:QuorumCnxManager@190": 1,
+      "WorkerSender[myid=1]:QuorumCnxManager@368": 5,
+      "WorkerSender[myid=3]:QuorumCnxManager@368": 1,
+      "main:DatadirCleanupManager@78": 1,
+      "main:DatadirCleanupManager@79": 3,
+      "main:FileSnap@83": 1,
+      "main:QuorumPeer@913": 1,
+      "main:QuorumPeer@933": 2,
+      "main:QuorumPeer@944": 1,
+      "main:QuorumPeerMain@127": 1
+    },
+    "total_components": 96
+  },
+  "state_machine": {
+    "counters": {
+      "2013": {
+        "type": "counter",
+        "samples": [
+          17
+        ]
+      },
+      "id": {
+        "type": "incrementing_counter",
+        "samples": [
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          3,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          188978561024,
+          1
+        ]
+      },
+      "is": {
+        "type": "counter",
+        "samples": [
+          0
+        ]
+      },
+      "of": {
+        "type": "incrementing_counter",
+        "samples": [
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          20000,
+          20000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000
+        ]
+      },
+      "on": {
+        "type": "counter",
+        "samples": [
+          6
+        ]
+      },
+      "session": {
+        "type": "counter",
+        "samples": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "sessionid": {
+        "type": "counter",
+        "samples": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "timeout": {
+        "type": "incrementing_counter",
+        "samples": [
+          10000,
+          10000,
+          10000,
+          10000,
+          20000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          20000,
+          10000,
+          10000,
+          10000,
+          20000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          10000,
+          20000,
+          20000,
+          10000,
+          10000,
+          10000,
+          10000
+        ]
+      },
+      "to": {
+        "type": "incrementing_counter",
+        "samples": [
+          2,
+          2,
+          3,
+          2,
+          2,
+          3,
+          2000,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2,
+          3,
+          2,
+          3,
+          3,
+          2,
+          2,
+          3,
+          2,
+          2,
+          2,
+          2,
+          3,
+          2,
+          2,
+          2,
+          2,
+          2,
+          3,
+          2,
+          3,
+          2,
+          3,
+          2,
+          3,
+          3,
+          2,
+          3,
+          2,
+          2,
+          3,
+          2,
+          2,
+          3,
+          2,
+          2,
+          2,
+          2,
+          3,
+          2,
+          3,
+          3,
+          3,
+          2,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2,
+          3,
+          2,
+          2,
+          2,
+          3,
+          3,
+          2,
+          3,
+          3,
+          2,
+          2,
+          3,
+          2,
+          3,
+          3,
+          3,
+          2,
+          2,
+          3,
+          3,
+          3,
+          3,
+          0,
+          3,
+          0,
+          0,
+          2
+        ]
+      }
+    },
+    "flags": {
+      "ON": 2
+    },
+    "sequences": {
+      "common_transitions": {
+        "Connection broken for id 18897 → Interrupted while waiting for ": 54,
+        "Connection broken for id 18897 → Interrupting SendWorker": 62,
+        "Connection broken for id 18897 → Received connection request /1": 67,
+        "Connection broken for id 18897 → Send worker leaving thread": 52,
+        "Interrupted while waiting for  → Connection broken for id 18897": 62,
+        "Interrupted while waiting for  → Interrupting SendWorker": 50,
+        "Interrupted while waiting for  → Received connection request /1": 72,
+        "Interrupted while waiting for  → Send worker leaving thread": 67,
+        "Interrupting SendWorker → Connection broken for id 18897": 52,
+        "Interrupting SendWorker → Interrupted while waiting for ": 60,
+        "Interrupting SendWorker → Received connection request /1": 57,
+        "Interrupting SendWorker → Send worker leaving thread": 45,
+        "Received connection request /1 → Connection broken for id 18897": 67,
+        "Received connection request /1 → Interrupted while waiting for ": 78,
+        "Received connection request /1 → Interrupting SendWorker": 44,
+        "Received connection request /1 → Send worker leaving thread": 59,
+        "Send worker leaving thread → Connection broken for id 18897": 55,
+        "Send worker leaving thread → Interrupted while waiting for ": 58,
+        "Send worker leaving thread → Interrupting SendWorker": 58,
+        "Send worker leaving thread → Received connection request /1": 52
+      },
+      "total_sequences": 1645
+    },
+    "values": {}
+  },
+  "causal_chains": {
+    "chains": [
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 545
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 30
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 33
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 46
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 29
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 10
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 0
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 10
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 13
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 29
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 20
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 0
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 6
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 33
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 6
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 10
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 19
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 19
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 162
+      },
+      {
+        "component": "SendWorker:188978561024:QuorumCnxManager$SendWorker@679",
+        "from": "Interrupted while waiting for message on queue",
+        "to": "Interrupted while waiting for message on queue",
+        "time_diff": 16
+      }
+    ],
+    "transition_probabilities": {
+      "Cannot open channel to 2 at election address /10.1": {
+        "Cannot open channel to 2 at election address /10.1": 0.5319148936170213,
+        "Cannot open channel to 3 at election address /10.1": 0.46808510638297873
+      },
+      "Cannot open channel to 3 at election address /10.1": {
+        "Cannot open channel to 2 at election address /10.1": 0.5714285714285714,
+        "Cannot open channel to 3 at election address /10.1": 0.42857142857142855
+      },
+      "Client attempting to establish new session at /10.": {
+        "Client attempting to establish new session at /10.": 1
+      },
+      "Closed socket connection for client /10.10.34.11:5": {
+        "Closed socket connection for client /10.10.34.11:5": 0.2222222222222222,
+        "Closed socket connection for client /10.10.34.12:3": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.12:4": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.12:5": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.13:3": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.13:4": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.21:5": 0.1111111111111111,
+        "Closed socket connection for client /10.10.34.35:4": 0.1111111111111111
+      },
+      "Closed socket connection for client /10.10.34.12:4": {
+        "Closed socket connection for client /10.10.34.11:5": 0.5,
+        "Closed socket connection for client /10.10.34.12:4": 0.25,
+        "Closed socket connection for client /10.10.34.13:3": 0.25
+      },
+      "Closed socket connection for client /10.10.34.12:5": {
+        "Closed socket connection for client /10.10.34.11:5": 0.2,
+        "Closed socket connection for client /10.10.34.18:4": 0.2,
+        "Closed socket connection for client /10.10.34.19:5": 0.2,
+        "Closed socket connection for client /10.10.34.27:3": 0.2,
+        "Closed socket connection for client /10.10.34.28:3": 0.2
+      },
+      "Closed socket connection for client /10.10.34.13:3": {
+        "Closed socket connection for client /10.10.34.11:4": 0.25,
+        "Closed socket connection for client /10.10.34.11:5": 0.25,
+        "Closed socket connection for client /10.10.34.12:3": 0.25,
+        "Closed socket connection for client /10.10.34.17:5": 0.25
+      },
+      "Connection broken for id 188978561024, my id = 1, ": {
+        "Connection broken for id 188978561024, my id = 1, ": 0.9893617021276596,
+        "Connection broken for id 188978561024, my id = 2, ": 0.010638297872340425
+      },
+      "Connection broken for id 188978561024, my id = 2, ": {
+        "Connection broken for id 188978561024, my id = 2, ": 0.9895833333333334,
+        "Connection broken for id 188978561024, my id = 3, ": 0.010416666666666666
+      },
+      "Connection broken for id 188978561024, my id = 3, ": {
+        "Connection broken for id 188978561024, my id = 3, ": 1
+      },
+      "Interrupted while waiting for message on queue": {
+        "Interrupted while waiting for message on queue": 1
+      },
+      "Interrupting SendWorker": {
+        "Interrupting SendWorker": 1
+      },
+      "Notification time out: 60000": {
+        "Notification time out: 60000": 1
+      },
+      "Processed session termination for sessionid: 0x14e": {
+        "Processed session termination for sessionid: 0x14e": 0.16666666666666666,
+        "Processed session termination for sessionid: 0x24e": 0.3333333333333333,
+        "Processed session termination for sessionid: 0x34e": 0.5
+      },
+      "Processed session termination for sessionid: 0x14f": {
+        "Processed session termination for sessionid: 0x14f": 0.5,
+        "Processed session termination for sessionid: 0x34f": 0.5
+      },
+      "Processed session termination for sessionid: 0x24e": {
+        "Processed session termination for sessionid: 0x14e": 0.2222222222222222,
+        "Processed session termination for sessionid: 0x24e": 0.2222222222222222,
+        "Processed session termination for sessionid: 0x34e": 0.5555555555555556
+      },
+      "Processed session termination for sessionid: 0x34e": {
+        "Processed session termination for sessionid: 0x14e": 0.4375,
+        "Processed session termination for sessionid: 0x24e": 0.1875,
+        "Processed session termination for sessionid: 0x34e": 0.3125,
+        "Processed session termination for sessionid: 0x34f": 0.0625
+      },
+      "Processed session termination for sessionid: 0x34f": {
+        "Processed session termination for sessionid: 0x14f": 1
+      },
+      "Send worker leaving thread": {
+        "Send worker leaving thread": 1
+      },
+      "caught end of stream exception": {
+        "caught end of stream exception": 1
+      }
+    },
+    "common_patterns": [
+      {
+        "pattern": [
+          "Interrupted while waiting for message on queue",
+          "Interrupted while waiting for message on queue",
+          "Interrupted while waiting for message on queue"
+        ],
+        "frequency": 310
+      },
+      {
+        "pattern": [
+          "Interrupting SendWorker",
+          "Interrupting SendWorker",
+          "Interrupting SendWorker"
+        ],
+        "frequency": 262
+      },
+      {
+        "pattern": [
+          "Send worker leaving thread",
+          "Send worker leaving thread",
+          "Send worker leaving thread"
+        ],
+        "frequency": 258
+      },
+      {
+        "pattern": [
+          "Connection broken for id 188978561024, my id = 3, ",
+          "Connection broken for id 188978561024, my id = 3, ",
+          "Connection broken for id 188978561024, my id = 3, "
+        ],
+        "frequency": 96
+      },
+      {
+        "pattern": [
+          "Connection broken for id 188978561024, my id = 2, ",
+          "Connection broken for id 188978561024, my id = 2, ",
+          "Connection broken for id 188978561024, my id = 2, "
+        ],
+        "frequency": 94
+      },
+      {
+        "pattern": [
+          "Connection broken for id 188978561024, my id = 1, ",
+          "Connection broken for id 188978561024, my id = 1, ",
+          "Connection broken for id 188978561024, my id = 1, "
+        ],
+        "frequency": 92
+      },
+      {
+        "pattern": [
+          "Client attempting to establish new session at /10.",
+          "Client attempting to establish new session at /10.",
+          "Client attempting to establish new session at /10."
+        ],
+        "frequency": 38
+      },
+      {
+        "pattern": [
+          "caught end of stream exception",
+          "caught end of stream exception",
+          "caught end of stream exception"
+        ],
+        "frequency": 34
+      },
+      {
+        "pattern": [
+          "Notification time out: 60000",
+          "Notification time out: 60000",
+          "Notification time out: 60000"
+        ],
+        "frequency": 33
+      },
+      {
+        "pattern": [
+          "Cannot open channel to 2 at election address /10.1",
+          "Cannot open channel to 3 at election address /10.1",
+          "Cannot open channel to 2 at election address /10.1"
+        ],
+        "frequency": 13
+      }
+    ],
+    "total_chains": 1904
+  },
+  "value_relationships": {
+    "correlations": [
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.12:3888:QuorumCnxManager$Listener@493.13",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.3 × /10.10.34.12:3888:QuorumCnxManager$Listener@493.13",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.11:3888:QuorumCnxManager$Listener@493.number",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.11:3888:QuorumCnxManager$Listener@493.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.13:3888:QuorumCnxManager$Listener@493.13",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.13:3888:QuorumCnxManager$Listener@493.13",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "CommitProcessor:1:ZooKeeperServer@595.11",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × CommitProcessor:1:ZooKeeperServer@595.11",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.13",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.13",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "CommitProcessor:3:ZooKeeperServer@595.timeout",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 1.0 × CommitProcessor:3:ZooKeeperServer@595.timeout",
+        "confidence": "high"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.11",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.11",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839.12",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839.12",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.number",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.3 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839.number",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.13:3888:QuorumCnxManager$Listener@493.number",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.13:3888:QuorumCnxManager$Listener@493.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.12:3888:QuorumCnxManager$Listener@493.12",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.12:3888:QuorumCnxManager$Listener@493.12",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.13:3888:QuorumCnxManager$Listener@493.12",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.13:3888:QuorumCnxManager$Listener@493.12",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "ProcessThread(sid:1 cport:-1)::PrepRequestProcessor@476.sessionid",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout = ProcessThread(sid:1 cport:-1)::PrepRequestProcessor@476.sessionid + 10000",
+        "confidence": "high"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.11:3888:QuorumCnxManager$Listener@493.12",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.11:3888:QuorumCnxManager$Listener@493.12",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.12:3888:QuorumCnxManager$Listener@493.number",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.12:3888:QuorumCnxManager$Listener@493.number",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793.13",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793.13",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.11",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.11",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.13",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.3 × NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.13",
+        "confidence": "medium"
+      },
+      {
+        "value1": "CommitProcessor:2:ZooKeeperServer@595.timeout",
+        "value2": "/10.10.34.11:3888:QuorumCnxManager$Listener@493.11",
+        "relationship": "CommitProcessor:2:ZooKeeperServer@595.timeout ≈ 0.2 × /10.10.34.11:3888:QuorumCnxManager$Listener@493.11",
+        "confidence": "medium"
+      }
+    ],
+    "formulas": [
+      {
+        "variable": "CommitProcessor:1:ZooKeeperServer@595.session",
+        "pattern": "arithmetic_progression",
+        "description": "CommitProcessor:1:ZooKeeperServer@595.session follows an arithmetic progression"
+      },
+      {
+        "variable": "CommitProcessor:3:ZooKeeperServer@595.session",
+        "pattern": "arithmetic_progression",
+        "description": "CommitProcessor:3:ZooKeeperServer@595.session follows an arithmetic progression"
+      },
+      {
+        "variable": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.number",
+        "pattern": "arithmetic_progression",
+        "description": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.number follows an arithmetic progression"
+      },
+      {
+        "variable": "CommitProcessor:2:ZooKeeperServer@595.session",
+        "pattern": "arithmetic_progression",
+        "description": "CommitProcessor:2:ZooKeeperServer@595.session follows an arithmetic progression"
+      },
+      {
+        "variable": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.12",
+        "pattern": "arithmetic_progression",
+        "description": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.12 follows an arithmetic progression"
+      },
+      {
+        "variable": "ProcessThread(sid:2 cport:-1)::PrepRequestProcessor@476.sessionid",
+        "pattern": "arithmetic_progression",
+        "description": "ProcessThread(sid:2 cport:-1)::PrepRequestProcessor@476.sessionid follows an arithmetic progression"
+      },
+      {
+        "variable": "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.id",
+        "pattern": "arithmetic_progression",
+        "description": "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.id follows an arithmetic progression"
+      },
+      {
+        "variable": "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.number",
+        "pattern": "arithmetic_progression",
+        "description": "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.number follows an arithmetic progression"
+      },
+      {
+        "variable": "SessionTracker:ZooKeeperServer@325.session",
+        "pattern": "arithmetic_progression",
+        "description": "SessionTracker:ZooKeeperServer@325.session follows an arithmetic progression"
+      },
+      {
+        "variable": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.sessionid",
+        "pattern": "arithmetic_progression",
+        "description": "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.sessionid follows an arithmetic progression"
+      },
+      {
+        "variable": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.13",
+        "pattern": "arithmetic_progression",
+        "description": "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.13 follows an arithmetic progression"
+      }
+    ],
+    "distributions": {
+      "/10.10.34.11:3888:QuorumCnxManager$Listener@493.11": {
+        "min": 45307,
+        "max": 49518,
+        "avg": 47336.06060606061,
+        "median": 47366,
+        "count": 33,
+        "unique_values": 33,
+        "std_dev": 1163.6930746912956
+      },
+      "/10.10.34.11:3888:QuorumCnxManager$Listener@493.12": {
+        "min": 34051,
+        "max": 51380,
+        "avg": 49146.92592592593,
+        "median": 49940,
+        "count": 27,
+        "unique_values": 27,
+        "std_dev": 3164.638168140834
+      },
+      "/10.10.34.11:3888:QuorumCnxManager$Listener@493.13": {
+        "min": 32891,
+        "max": 60996,
+        "avg": 52609.21052631579,
+        "median": 59037,
+        "count": 38,
+        "unique_values": 38,
+        "std_dev": 11666.472790725194
+      },
+      "/10.10.34.11:3888:QuorumCnxManager$Listener@493.number": {
+        "min": 32891,
+        "max": 60996,
+        "avg": 49879.663265306124,
+        "median": 48922,
+        "count": 98,
+        "unique_values": 98,
+        "std_dev": 7823.474233388085
+      },
+      "/10.10.34.12:3888:QuorumCnxManager$Listener@493.11": {
+        "min": 32868,
+        "max": 60936,
+        "avg": 53345.96666666667,
+        "median": 59416,
+        "count": 30,
+        "unique_values": 30,
+        "std_dev": 11163.12205876514
+      },
+      "/10.10.34.12:3888:QuorumCnxManager$Listener@493.12": {
+        "min": 54788,
+        "max": 57977,
+        "avg": 56486.393939393936,
+        "median": 56426,
+        "count": 33,
+        "unique_values": 33,
+        "std_dev": 911.0254275596477
+      },
+      "/10.10.34.12:3888:QuorumCnxManager$Listener@493.13": {
+        "min": 33209,
+        "max": 45923,
+        "avg": 43937.34375,
+        "median": 44558,
+        "count": 32,
+        "unique_values": 32,
+        "std_dev": 2202.4499513237383
+      },
+      "/10.10.34.12:3888:QuorumCnxManager$Listener@493.number": {
+        "min": 32868,
+        "max": 60936,
+        "avg": 51267.63157894737,
+        "median": 55929,
+        "count": 95,
+        "unique_values": 95,
+        "std_dev": 8378.473595505431
+      },
+      "/10.10.34.13:3888:QuorumCnxManager$Listener@493.11": {
+        "min": 46538,
+        "max": 53230,
+        "avg": 48581.13157894737,
+        "median": 48502,
+        "count": 38,
+        "unique_values": 38,
+        "std_dev": 1287.493181812353
+      },
+      "/10.10.34.13:3888:QuorumCnxManager$Listener@493.12": {
+        "min": 47103,
+        "max": 49993,
+        "avg": 48416.2,
+        "median": 48257,
+        "count": 30,
+        "unique_values": 30,
+        "std_dev": 890.8999345231391
+      },
+      "/10.10.34.13:3888:QuorumCnxManager$Listener@493.13": {
+        "min": 44219,
+        "max": 47500,
+        "avg": 45999.52631578947,
+        "median": 46083,
+        "count": 38,
+        "unique_values": 38,
+        "std_dev": 1003.69257027402
+      },
+      "/10.10.34.13:3888:QuorumCnxManager$Listener@493.number": {
+        "min": 44219,
+        "max": 53230,
+        "avg": 47608.97169811321,
+        "median": 47515,
+        "count": 106,
+        "unique_values": 106,
+        "std_dev": 1622.2991573081633
+      },
+      "CommitProcessor:1:ZooKeeperServer@595.number": {
+        "min": 10000,
+        "max": 56492,
+        "avg": 27723.882352941175,
+        "median": 32876,
+        "count": 34,
+        "unique_values": 19,
+        "std_dev": 17746.22498011852
+      },
+      "CommitProcessor:2:ZooKeeperServer@595.number": {
+        "min": 10000,
+        "max": 56646,
+        "avg": 29366.777777777777,
+        "median": 39275,
+        "count": 36,
+        "unique_values": 20,
+        "std_dev": 18774.34015723339
+      },
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.number": {
+        "min": 32918,
+        "max": 60483,
+        "avg": 47664.25,
+        "median": 49010,
+        "count": 48,
+        "unique_values": 48,
+        "std_dev": 8255.944185605504
+      },
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@1001.sessionid": {
+        "min": 0,
+        "max": 0,
+        "avg": 0,
+        "median": 0,
+        "count": 44,
+        "unique_values": 1
+      },
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxnFactory@197.number": {
+        "min": 32876,
+        "max": 59359,
+        "avg": 47391.395833333336,
+        "median": 50224,
+        "count": 48,
+        "unique_values": 48,
+        "std_dev": 7694.52691782603
+      },
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@793.number": {
+        "min": 33442,
+        "max": 60436,
+        "avg": 47358.4358974359,
+        "median": 49139,
+        "count": 39,
+        "unique_values": 39,
+        "std_dev": 8022.116131062291
+      },
+      "NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:ZooKeeperServer@839.number": {
+        "min": 32782,
+        "max": 59458,
+        "avg": 49497.0243902439,
+        "median": 51260,
+        "count": 41,
+        "unique_values": 41,
+        "std_dev": 7365.393624464858
+      },
+      "ProcessThread(sid:2 cport:-1)::PrepRequestProcessor@476.sessionid": {
+        "min": 0,
+        "max": 0,
+        "avg": 0,
+        "median": 0,
+        "count": 39,
+        "unique_values": 1
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774.number": {
+        "min": 3200,
+        "max": 60000,
+        "avg": 58464.86486486487,
+        "median": 60000,
+        "count": 37,
+        "unique_values": 2,
+        "std_dev": 9210.810810810804
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774.out": {
+        "min": 3200,
+        "max": 60000,
+        "avg": 58464.86486486487,
+        "median": 60000,
+        "count": 37,
+        "unique_values": 2,
+        "std_dev": 9210.810810810804
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.12": {
+        "min": 3888,
+        "max": 3888,
+        "avg": 3888,
+        "median": 3888,
+        "count": 45,
+        "unique_values": 1
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.13": {
+        "min": 3888,
+        "max": 3888,
+        "avg": 3888,
+        "median": 3888,
+        "count": 34,
+        "unique_values": 1
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.number": {
+        "min": 3888,
+        "max": 3888,
+        "avg": 3888,
+        "median": 3888,
+        "count": 79,
+        "unique_values": 1
+      },
+      "QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:QuorumCnxManager@368.to": {
+        "min": 2,
+        "max": 3,
+        "avg": 2.430379746835443,
+        "median": 2,
+        "count": 79,
+        "unique_values": 2,
+        "std_dev": 0.49512929659766963
+      },
+      "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.id": {
+        "min": 188978561024,
+        "max": 188978561024,
+        "avg": 188978561024,
+        "median": 188978561024,
+        "count": 289,
+        "unique_values": 1
+      },
+      "RecvWorker:188978561024:QuorumCnxManager$RecvWorker@762.number": {
+        "min": 188978561024,
+        "max": 188978561024,
+        "avg": 188978561024,
+        "median": 188978561024,
+        "count": 289,
+        "unique_values": 1
+      },
+      "SessionTracker:ZooKeeperServer@325.of": {
+        "min": 10000,
+        "max": 20000,
+        "avg": 10500,
+        "median": 10000,
+        "count": 40,
+        "unique_values": 2,
+        "std_dev": 2179.449471770337
+      },
+      "SessionTracker:ZooKeeperServer@325.session": {
+        "min": 0,
+        "max": 0,
+        "avg": 0,
+        "median": 0,
+        "count": 40,
+        "unique_values": 1
+      }
+    }
+  },
+  "temporal_patterns": {
+    "periodic_events": {},
+    "event_clusters": [
+      {
+        "time": "2015-07-29T19:21:53Z",
+        "size": 5,
+        "sample_messages": [
+          "Send worker leaving thread",
+          "Interrupting SendWorker",
+          "Interrupted while waiting for ",
+          "Interrupted while waiting for ",
+          "Interrupting SendWorker"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:22:26Z",
+        "size": 6,
+        "sample_messages": [
+          "Received connection request /1",
+          "Interrupted while waiting for ",
+          "Interrupted while waiting for ",
+          "Interrupting SendWorker",
+          "Interrupting SendWorker"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:23:20Z",
+        "size": 4,
+        "sample_messages": [
+          "Received connection request /1",
+          "Interrupted while waiting for ",
+          "Send worker leaving thread",
+          "Interrupting SendWorker"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:25:07Z",
+        "size": 4,
+        "sample_messages": [
+          "Interrupting SendWorker",
+          "Send worker leaving thread",
+          "Interrupting SendWorker",
+          "Received connection request /1"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:25:37Z",
+        "size": 4,
+        "sample_messages": [
+          "Received connection request /1",
+          "Connection broken for id 18897",
+          "Received connection request /1",
+          "Interrupting SendWorker"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:28:21Z",
+        "size": 4,
+        "sample_messages": [
+          "Interrupted while waiting for ",
+          "Connection broken for id 18897",
+          "Interrupting SendWorker",
+          "Connection broken for id 18897"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:29:08Z",
+        "size": 5,
+        "sample_messages": [
+          "Send worker leaving thread",
+          "Received connection request /1",
+          "Interrupted while waiting for ",
+          "Send worker leaving thread",
+          "Interrupting SendWorker"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:29:12Z",
+        "size": 4,
+        "sample_messages": [
+          "Interrupted while waiting for ",
+          "Send worker leaving thread",
+          "Interrupting SendWorker",
+          "Interrupted while waiting for "
+        ]
+      },
+      {
+        "time": "2015-07-29T19:29:21Z",
+        "size": 4,
+        "sample_messages": [
+          "Interrupting SendWorker",
+          "Send worker leaving thread",
+          "Interrupting SendWorker",
+          "Send worker leaving thread"
+        ]
+      },
+      {
+        "time": "2015-07-29T19:29:58Z",
+        "size": 5,
+        "sample_messages": [
+          "Send worker leaving thread",
+          "Interrupted while waiting for ",
+          "Connection broken for id 18897",
+          "Send worker leaving thread",
+          "Interrupted while waiting for "
+        ]
+      }
+    ],
+    "time_of_day": {
+      "hourly_distribution": {
+        "0": 0.015,
+        "1": 0.0015,
+        "10": 0.0025,
+        "11": 0.015,
+        "12": 0.0015,
+        "13": 0.0035,
+        "14": 0.0065,
+        "15": 0.0245,
+        "16": 0.0265,
+        "17": 0.035,
+        "18": 0.0245,
+        "19": 0.7535,
+        "2": 0.0025,
+        "20": 0.0095,
+        "21": 0.028,
+        "22": 0.007,
+        "23": 0.023,
+        "3": 0.0035,
+        "4": 0.002,
+        "5": 0.0035,
+        "6": 0.001,
+        "7": 0.0045,
+        "8": 0.0035,
+        "9": 0.0025
+      },
+      "peak_hours": [
+        {
+          "hour": 19,
+          "count": 1507
+        },
+        {
+          "hour": 17,
+          "count": 70
+        },
+        {
+          "hour": 21,
+          "count": 56
+        }
+      ]
+    },
+    "gaps_and_bursts": {
+      "avg_interval_sec": 519.584420710354,
+      "max_gap_sec": 682884.278,
+      "min_interval_sec": -2310214.617,
+      "gaps_over_60s": 313,
+      "bursts": []
+    }
+  },
+  "statistics": {
+    "total_logs": 2000,
+    "unique_components": 96,
+    "unique_templates": 59,
+    "time_span": {
+      "first": "2015-07-29T17:41:44Z",
+      "last": "2015-08-10T18:12:34Z"
+    },
+    "avg_logs_per_minute": "N/A"
+  }
+}

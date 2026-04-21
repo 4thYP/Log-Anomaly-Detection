@@ -1,0 +1,5 @@
+server: zookeeper
+log_format:
+  delimiter: " - "
+  parts: ["timestamp", "level", "component", "message"]
+  timestamp_format: "2006-01-02 15:04:05"

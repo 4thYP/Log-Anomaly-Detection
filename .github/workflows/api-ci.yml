@@ -1,0 +1,49 @@
+name: API CI
+
+on:
+  push:
+    paths:
+      - "log-ingestion-api/**"
+  pull_request:
+    paths:
+      - "log-ingestion-api/**"
+
+jobs:
+  test-api:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # --- INSTALL DEPS ---
+      - name: Install dependencies
+        working-directory: ./log-ingestion-api/
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+
+      # --- LINT / SYNTAX CHECK ---
+      - name: Lint & Syntax Check
+        working-directory: ./log-ingestion-api/
+        shell: bash
+        run: |
+          python3 -m py_compile $(git ls-files '*.py')
+
+      # --- SMOKE TEST ---
+      - name: Start FastAPI server (smoke test)
+        working-directory: ./log-ingestion-api/
+        shell: bash
+        run: |
+          python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          curl -f http://localhost:8000 || exit 1

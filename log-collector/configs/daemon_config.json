@@ -1,0 +1,20 @@
+{
+  "servers": [
+    {
+      "log_file": "healthcare",
+      "server_id": "HEALTHCARE_SERVER"
+    },
+    {
+      "log_file": "linux",
+      "server_id": "LINUX_SERVER"
+    },
+    {
+      "log_file": "windows",
+      "server_id": "WINDOWS_SERVER"
+    },
+    {
+      "log_file": "zookeeper",
+      "server_id": "ZOOKEEPER_SERVER"
+    }
+  ]
+}

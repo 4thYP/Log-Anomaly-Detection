@@ -1,0 +1,18 @@
+server: healthcare
+log_format:
+  delimiter: "|"
+  parts: ["timestamp", "component", "user_id", "message"]
+  timestamp_format: "20060102-15:04:05"
+state_variables:
+  step_count:
+    pattern: "onStandStepChanged (\\d+)"
+    type: "incrementing_counter"
+  total_calories:
+    pattern: "totalCalories=(\\d+)"
+    type: "calculated"
+causal_chains:
+  step_update:
+    - "onStandStepChanged"
+    - "setTodayTotalDetailSteps"
+    - "calculateCalories"
+    - "REPORT"

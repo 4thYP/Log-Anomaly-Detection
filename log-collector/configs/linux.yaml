@@ -1,0 +1,5 @@
+server: linux
+log_format:
+  delimiter: " "
+  parts: ["timestamp", "hostname", "process", "message"]
+  timestamp_format: "Jan 2 15:04:05"
