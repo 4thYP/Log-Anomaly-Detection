@@ -2,6 +2,8 @@ from app.models.log_models import ServerType
 from app.parsers.linux_parser import LinuxParser
 from app.parsers.windows_parser import WindowsParser
 from app.parsers.zookeeper_parser import ZookeeperParser
+from app.parsers.hpc_parser import HPCParser
+from app.parsers.healthapp_parser import HealthAppParser
 
 class ParserFactory:
 
@@ -16,6 +18,12 @@ class ParserFactory:
 
         elif server_type == ServerType.ZOOKEEPER:
             return ZookeeperParser()
+
+        elif server_type == ServerType.HPC:
+            return HPCParser()
+
+        elif server_type == ServerType.HEALTHAPP:
+            return HealthAppParser()
 
         else:
             raise ValueError(f"No parser for server type: {server_type}")
